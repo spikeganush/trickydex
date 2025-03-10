@@ -1,8 +1,33 @@
-# Welcome to your Expo app 👋
+# TrickyDex - Rollerblading Trick Dictionary & BLADE Game
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+TrickyDex is a mobile application for rollerblading enthusiasts that combines a comprehensive trick dictionary with an interactive BLADE game for practicing tricks with friends.
 
-## Get started
+## Features
+
+### Trick Catalog
+- Comprehensive dictionary of rollerblading tricks
+- Detailed descriptions and difficulty ratings
+- Organized by categories: Soul Grinds, Groove Grinds, Special Grinds, Air Tricks, and more
+- Search and filter functionality to find specific tricks
+
+### BLADE Game
+The BLADE game follows these rules:
+1. All players must attempt the SAME trick in each round
+2. If a player fails a trick, they get a letter (B-L-A-D-E)
+3. When a player spells BLADE, they're eliminated
+4. Last player standing wins
+
+#### Game Features:
+- Select specific trick categories to customize your game
+- Track player progress and trick history
+- Intuitive navigation between game screens
+- Sound effects for button presses and game events
+
+## Development Status
+
+TrickyDex is currently in early development. The UI/UX is in its initial stages and we welcome contributions to improve the visual design and user experience. Feel free to fork the project and submit pull requests with enhancements.
+
+## Getting Started
 
 1. Install dependencies
 
@@ -13,38 +38,40 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Contributing
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+We welcome contributions to TrickyDex! Here are some areas where we'd especially appreciate help:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- UI/UX improvements
+- Additional trick data and categories
+- Performance optimizations
+- New game modes or features
 
-## Get a fresh project
+To contribute:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-When you're ready, run:
+## Technologies Used
 
-```bash
-npm run reset-project
-```
+- React Native
+- Expo
+- TypeScript
+- Expo Router for navigation
+- Expo Audio for sound effects
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## License
 
-## Learn more
+This project is open source and available under the MIT License.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Contact
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+For questions or suggestions, please open an issue on the GitHub repository.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Built with ❤️ for the rollerblading community
