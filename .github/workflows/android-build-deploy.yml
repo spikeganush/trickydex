@@ -1,0 +1,82 @@
+name: Android Build and Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Google Play
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Setup EAS
+        run: npm install -g eas-cli
+        
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      
+      - name: Set deployment track based on branch
+        id: set-track
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "TRACK=internal" >> $GITHUB_ENV
+            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "TRACK=closed" >> $GITHUB_ENV
+            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TRACK=production" >> $GITHUB_ENV
+            echo "BUILD_PROFILE=production" >> $GITHUB_ENV
+          else
+            echo "TRACK=internal" >> $GITHUB_ENV
+            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
+          fi
+          
+      - name: Build Android App Bundle
+        run: eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --no-wait
+        
+      - name: Wait for build to complete
+        run: |
+          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=in-queue,in-progress | jq -r '.[0].id')
+          echo "Waiting for build $BUILD_ID to complete..."
+          eas build:show $BUILD_ID --non-interactive --wait
+          
+      - name: Download latest build
+        run: |
+          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=finished | jq -r '.[0].id')
+          eas build:download --build-id $BUILD_ID --output=app-release.aab
+          
+      - name: Setup Google Play Service Account
+        run: |
+          echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service-account.json
+          
+      - name: Deploy to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: service-account.json
+          packageName: com.trickydex.app
+          releaseFiles: app-release.aab
+          track: ${{ env.TRACK }}
+          status: completed
