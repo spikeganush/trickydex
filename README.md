@@ -1,4 +1,5 @@
-# 🛼 TrickyDex - Rollerblading Trick Dictionary & BLADE Game
+# 🛼 TrickyDex
+# Rollerblading Trick Dictionary & BLADE Game
 
 <div align="center">
 
