@@ -202,6 +202,58 @@ The app features a dark theme with red accents inspired by traditional Pokédex 
 9. **Localization**: Add support for multiple languages
 10. **Accessibility**: Improve accessibility features for all users
 
+## CI/CD and Deployment
+
+TrickyDex uses GitHub Actions for continuous integration and deployment to Google Play.
+
+### Workflow Overview
+
+The CI/CD pipeline is defined in `.github/workflows/android-build-deploy.yml` and consists of two main jobs:
+
+1. **Build Job**: Builds the Android app locally in the GitHub runner
+2. **Deploy Job**: Deploys the built artifact to Google Play
+
+### Key Features
+
+- **Automated Builds**: Triggered on pushes to `dev`, `staging`, and `main` branches
+- **Environment-Based Deployment**:
+  - `dev` branch → Internal testing track
+  - `staging` branch → Closed testing track
+  - `main` branch → Production track
+- **Manual Workflow Triggers**: Supports manual workflow dispatch with options to:
+  - Skip the build and use the latest artifact
+  - Manually specify the Google Play track
+  - Choose version increment type (patch, minor, major, none)
+
+### Versioning System
+
+The workflow includes an intelligent versioning system that:
+
+1. **Automatically Increments Version Numbers**:
+   - Follows semantic versioning (MAJOR.MINOR.PATCH)
+   - Increments version code for Google Play requirements
+
+2. **Smart Version Determination**:
+   - Manual selection via workflow dispatch
+   - Commit message tags (`#major`, `#minor`) for automatic detection
+   - Branch-based defaults (main branch uses at least minor increments)
+
+3. **Version Persistence**:
+   - Commits version changes back to the repository
+   - Uses `[skip ci]` tag to prevent workflow loops
+   - Maintains consistent versioning across builds
+
+### Required Secrets
+
+The workflow requires the following GitHub secrets:
+
+- `EXPO_TOKEN`: For authenticating with Expo services
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: For deploying to Google Play
+
+### Local Development vs CI/CD
+
+When developing locally, version numbers in `app.json` remain static. The CI/CD pipeline handles version incrementation automatically during the build process, so developers don't need to manually update versions for each release.
+
 ## Getting Started for Developers
 
 1. Clone the repository

@@ -48,6 +48,13 @@ jobs:
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+      
+      - name: 🏗 Setup Git identity
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
         
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
@@ -101,6 +108,10 @@ jobs:
           
           echo "Using track: ${{ env.TRACK }}"
           echo "Using build profile: ${{ env.BUILD_PROFILE }}"
+          
+          # Set the current branch name for later use
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
       
       - name: 🔢 Update version code and name
         id: version
@@ -177,7 +188,33 @@ jobs:
           # Save the versions for later steps
           echo "version_name=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
-          
+      
+      - name: 📝 Commit version changes
+        run: |
+          # Check if there are changes to commit
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected, committing version update..."
+            
+            # Get current branch name
+            BRANCH_NAME="${{ env.BRANCH_NAME }}"
+            echo "Current branch: $BRANCH_NAME"
+            
+            # Update README.md version badge
+            echo "Updating README.md version badge..."
+            sed -i "s|version-[0-9]\+\.[0-9]\+\.[0-9]\+-blue|version-${{ steps.version.outputs.version_name }}-blue|g" README.md
+            
+            # Commit the changes
+            git add app.json README.md
+            git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }}) [skip ci]"
+            
+            # Push the changes back to the repository
+            git push origin $BRANCH_NAME
+            
+            echo "✅ Version changes committed and pushed to $BRANCH_NAME"
+          else
+            echo "No changes to commit"
+          fi
+      
       - name: 🚀 Build Android App Bundle Locally
         run: |
           echo "Building Android app with profile ${{ env.BUILD_PROFILE }}..."
