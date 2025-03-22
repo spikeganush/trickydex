@@ -55,17 +55,63 @@ jobs:
           fi
           
       - name: Build Android App Bundle
+        id: build
         run: eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --no-wait
         
       - name: Wait for build to complete
         run: |
-          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=in-queue,in-progress | jq -r '.[0].id')
-          echo "Waiting for build $BUILD_ID to complete..."
+          # Get the latest build ID more reliably
+          echo "Fetching the latest build ID..."
+          sleep 10  # Give EAS some time to register the build
+          
+          # Try to get the build ID, with retries
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          BUILD_ID=""
+          
+          while [ -z "$BUILD_ID" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $(($RETRY_COUNT + 1)) to get build ID..."
+            BUILD_LIST=$(eas build:list --json --limit=1 --platform=android --status=in-queue,in-progress)
+            
+            if [ $? -eq 0 ] && [ ! -z "$BUILD_LIST" ]; then
+              # Try to extract the build ID safely
+              BUILD_ID=$(echo "$BUILD_LIST" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+            fi
+            
+            if [ -z "$BUILD_ID" ]; then
+              echo "Could not get build ID, retrying in 10 seconds..."
+              sleep 10
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          done
+          
+          if [ -z "$BUILD_ID" ]; then
+            echo "Failed to get build ID after $MAX_RETRIES attempts. Checking for finished builds..."
+            BUILD_LIST=$(eas build:list --json --limit=1 --platform=android --status=finished)
+            BUILD_ID=$(echo "$BUILD_LIST" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+          fi
+          
+          if [ -z "$BUILD_ID" ]; then
+            echo "Could not find any builds. Exiting with error."
+            exit 1
+          fi
+          
+          echo "Found build ID: $BUILD_ID"
+          echo "Waiting for build to complete..."
           eas build:show $BUILD_ID --non-interactive --wait
           
       - name: Download latest build
         run: |
-          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=finished | jq -r '.[0].id')
+          echo "Fetching the latest finished build..."
+          BUILD_LIST=$(eas build:list --json --limit=1 --platform=android --status=finished)
+          BUILD_ID=$(echo "$BUILD_LIST" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+          
+          if [ -z "$BUILD_ID" ]; then
+            echo "Could not find any finished builds. Exiting with error."
+            exit 1
+          fi
+          
+          echo "Downloading build $BUILD_ID..."
           eas build:download --build-id $BUILD_ID --output=app-release.aab
           
       - name: Setup Google Play Service Account
