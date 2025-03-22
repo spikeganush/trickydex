@@ -9,12 +9,30 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:  # Allow manual triggering
+    inputs:
+      skip_build:
+        description: 'Skip build and use the latest artifact'
+        type: boolean
+        default: false
+      track:
+        description: 'Google Play track (internal, closed, production)'
+        type: choice
+        options:
+          - auto
+          - internal
+          - closed
+          - production
+        default: 'auto'
 
 jobs:
-  build-and-deploy:
-    name: Build and Deploy to Google Play
+  build:
+    name: 🏗 Build Android App
     runs-on: ubuntu-latest
-    
+    if: ${{ github.event.inputs.skip_build != 'true' }}
+    outputs:
+      track: ${{ steps.set-track.outputs.track }}
+      build_profile: ${{ steps.set-track.outputs.build_profile }}
+      
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v3
@@ -39,25 +57,48 @@ jobs:
       - name: 🔍 Set deployment track based on branch
         id: set-track
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-            echo "TRACK=internal" >> $GITHUB_ENV
-            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "TRACK=closed" >> $GITHUB_ENV
-            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "TRACK=production" >> $GITHUB_ENV
-            echo "BUILD_PROFILE=production" >> $GITHUB_ENV
+          if [[ "${{ github.event.inputs.track }}" != "auto" && "${{ github.event.inputs.track }}" != "" ]]; then
+            # Use manually specified track from workflow dispatch
+            echo "track=${{ github.event.inputs.track }}" >> $GITHUB_OUTPUT
+            
+            if [[ "${{ github.event.inputs.track }}" == "production" ]]; then
+              echo "build_profile=production" >> $GITHUB_OUTPUT
+            else
+              echo "build_profile=preview" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "TRACK=internal" >> $GITHUB_ENV
-            echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
+            # Determine track based on branch
+            if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              echo "track=internal" >> $GITHUB_OUTPUT
+              echo "build_profile=preview" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+              echo "track=closed" >> $GITHUB_OUTPUT
+              echo "build_profile=preview" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "track=production" >> $GITHUB_OUTPUT
+              echo "build_profile=production" >> $GITHUB_OUTPUT
+            else
+              echo "track=internal" >> $GITHUB_OUTPUT
+              echo "build_profile=preview" >> $GITHUB_OUTPUT
+            fi
           fi
+          
+          # Also set as environment variables for this job
+          echo "TRACK=$(cat $GITHUB_OUTPUT | grep track | cut -d= -f2)" >> $GITHUB_ENV
+          echo "BUILD_PROFILE=$(cat $GITHUB_OUTPUT | grep build_profile | cut -d= -f2)" >> $GITHUB_ENV
+          
+          echo "Using track: ${{ env.TRACK }}"
+          echo "Using build profile: ${{ env.BUILD_PROFILE }}"
           
       - name: 🚀 Build Android App Bundle Locally
         run: |
           echo "Building Android app with profile ${{ env.BUILD_PROFILE }}..."
+          # Create artifacts directory
+          mkdir -p artifacts
+          
           # Clean prebuild to ensure a fresh build
           npx expo prebuild --clean
+          
           # Build locally instead of using Expo's build service
           eas build -p android --local --profile ${{ env.BUILD_PROFILE }} --output artifacts/app-release.aab --non-interactive
           
@@ -68,7 +109,48 @@ jobs:
           
           echo "Successfully built app-release.aab"
           ls -la artifacts/app-release.aab
+      
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-app-bundle
+          path: artifacts/app-release.aab
+          retention-days: 5
+  
+  deploy:
+    name: 🚀 Deploy to Google Play
+    needs: build
+    runs-on: ubuntu-latest
+    # Always run deploy job, even if build is skipped
+    if: ${{ always() && (github.event.inputs.skip_build == 'true' || needs.build.result == 'success') }}
+    
+    steps:
+      - name: 📥 Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: android-app-bundle
+          path: artifacts
+      
+      - name: 📋 Check artifact exists
+        run: |
+          if [ ! -f "artifacts/app-release.aab" ]; then
+            echo "No app bundle found. Make sure the build job completed successfully."
+            exit 1
+          fi
           
+          echo "Found app bundle:"
+          ls -la artifacts/app-release.aab
+      
+      - name: 🔍 Set track based on input or build job
+        run: |
+          if [[ "${{ github.event.inputs.skip_build }}" == "true" && "${{ github.event.inputs.track }}" != "auto" ]]; then
+            echo "TRACK=${{ github.event.inputs.track }}" >> $GITHUB_ENV
+          else
+            echo "TRACK=${{ needs.build.outputs.track }}" >> $GITHUB_ENV
+          fi
+          
+          echo "Using track: ${{ env.TRACK }}"
+      
       - name: 🔐 Setup Google Play Service Account
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service-account.json
