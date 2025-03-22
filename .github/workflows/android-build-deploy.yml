@@ -19,23 +19,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
           
-      - name: Install dependencies
-        run: npm ci
-        
       - name: Setup EAS
-        run: npm install -g eas-cli
-        
-      - name: Setup Expo
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+      
+      - name: Install dependencies
+        run: npm ci
       
       - name: Set deployment track based on branch
         id: set-track
@@ -54,36 +51,22 @@ jobs:
             echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
           fi
           
-      - name: Trigger Android App Build
-        id: trigger_build
-        run: |
-          echo "Starting Android build with profile ${{ env.BUILD_PROFILE }}..."
-          BUILD_OUTPUT=$(eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --json)
-          echo "Build triggered successfully"
-          echo "BUILD_OUTPUT<<EOF" >> $GITHUB_ENV
-          echo "$BUILD_OUTPUT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+      - name: Build Android App
+        run: eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --wait
           
-          # Extract build ID
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
+      - name: Download latest build
+        run: |
+          # Get the latest build ID
+          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=finished | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
+          
           if [ -z "$BUILD_ID" ]; then
-            echo "Failed to extract build ID"
+            echo "Could not find any finished builds. Exiting with error."
             exit 1
           fi
-          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
-          echo "Build ID: $BUILD_ID"
-      
-      - name: Wait for build to complete
-        run: |
-          echo "Waiting for build ${{ env.BUILD_ID }} to complete..."
-          eas build:show ${{ env.BUILD_ID }} --non-interactive --wait
-          echo "Build completed"
-      
-      - name: Download build artifact
-        run: |
-          echo "Downloading build artifact for build ${{ env.BUILD_ID }}..."
+          
+          echo "Downloading build $BUILD_ID..."
           mkdir -p artifacts
-          eas build:download --build-id ${{ env.BUILD_ID }} --output=artifacts/app-release.aab --non-interactive
+          eas build:download --build-id $BUILD_ID --output=artifacts/app-release.aab --non-interactive
           
           if [ ! -f "artifacts/app-release.aab" ]; then
             echo "Failed to download artifact"
