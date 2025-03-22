@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { initialTricks, Trick } from '../types/trick';
-import { preloadSounds, unloadSounds } from '../utils/sounds';
 
 interface AppContextType {
   favorites: number[];
@@ -11,21 +10,18 @@ interface AppContextType {
   addToRecentlyViewed: (trickId: number) => void;
   getFavorites: () => Trick[];
   getRecentlyViewed: () => Trick[];
+  isInitialAppLoad: boolean;
+  setInitialAppLoad: (value: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
-
-  // Preload sounds when the app starts
-  useEffect(() => {
-    preloadSounds();
-    return () => {
-      unloadSounds();
-    };
-  }, []);
+  const [isInitialAppLoad, setInitialAppLoad] = useState(true);
 
   const addFavorite = (trickId: number) => {
     setFavorites((prev) => {
@@ -74,6 +70,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addToRecentlyViewed,
         getFavorites,
         getRecentlyViewed,
+        isInitialAppLoad,
+        setInitialAppLoad,
       }}
     >
       {children}

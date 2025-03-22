@@ -1,76 +1,114 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
 import { useEffect } from 'react';
-import { playSound } from '../utils/sounds';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppContext } from '../context/AppContext';
 
 const HomeScreen = () => {
   const titleScale = useSharedValue(0);
   const router = useRouter();
+  const { isInitialAppLoad, setInitialAppLoad } = useAppContext();
 
   useEffect(() => {
-    titleScale.value = withSpring(1, { damping: 10, stiffness: 100 });
-  }, []);
+    if (isInitialAppLoad) {
+      titleScale.value = withSpring(1, { damping: 10, stiffness: 100 });
+      setInitialAppLoad(false);
+    } else {
+      titleScale.value = 1;
+    }
+  }, [isInitialAppLoad]);
 
   return (
-    <View style={styles.container}>
-      <Animated.Text style={[
-        styles.title,
-        { transform: [{ scale: titleScale }] }
-      ]}>
-        TrickyDex
-      </Animated.Text>
-      <TouchableOpacity style={styles.menuButton} onPress={() => {
-        playSound('click');
-        router.push('/(tricks)');
-      }}>
-        <Text style={styles.buttonText}>View Trick Catalog</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.menuButton} 
-        onPress={() => {
-          playSound('click');
-          router.push('/(game)');
-        }}
-      >
-        <Text style={styles.buttonText}>BLADE Game</Text>
-      </TouchableOpacity>
-    </View>
+    <LinearGradient
+      colors={['#2E3338', '#393E44']}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <View style={styles.content}>
+        <Animated.View
+          style={[styles.logoContainer, { transform: [{ scale: titleScale }] }]}
+        >
+          <Image
+            source={require('../assets/images/icon.png')}
+            style={styles.logo}
+          />
+          <Text style={styles.title}>TrickyDex</Text>
+        </Animated.View>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/(tricks)')}
+          >
+            <Ionicons name='list' size={24} color='#FFFFFF' />
+            <Text style={styles.buttonText}>Trick Catalog</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/(game)')}
+          >
+            <Ionicons name='game-controller' size={24} color='#FFFFFF' />
+            <Text style={styles.buttonText}>BLADE Game</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: '#E53935',
-    padding: 16,
+    padding: 24,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 40,
     color: '#FFFFFF',
-    marginBottom: 32,
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 48,
+    fontFamily: 'Roboto_900Black',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
-  menuButton: {
-    backgroundColor: '#A52A2A',
-    padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+  buttonContainer: {
+    width: '100%',
+    gap: 16,
+  },
+  button: {
+    backgroundColor: '#D13B40',
+    padding: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
   buttonText: {
-    color: '#FFD700',
-    fontSize: 20,
+    color: '#FFFFFF',
+    fontSize: 18,
     fontFamily: 'Roboto_700Bold',
   },
 });
