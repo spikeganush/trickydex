@@ -24,15 +24,17 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
           
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
+          expo-version: latest
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      
-      - name: 📦 Install dependencies
-        run: npm ci
+          packager: npm
       
       - name: 🔍 Set deployment track based on branch
         id: set-track
@@ -51,50 +53,20 @@ jobs:
             echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
           fi
           
-      - name: 🚀 Build Android App
-        id: build
+      - name: 🚀 Build Android App Bundle Locally
         run: |
           echo "Building Android app with profile ${{ env.BUILD_PROFILE }}..."
-          BUILD_RESULT=$(eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --json --wait)
-          echo "Build completed"
+          # Clean prebuild to ensure a fresh build
+          npx expo prebuild --clean
+          # Build locally instead of using Expo's build service
+          eas build -p android --local --profile ${{ env.BUILD_PROFILE }} --output artifacts/app-release.aab --non-interactive
           
-          # Extract the build ID from the result
-          BUILD_ID=$(echo "$BUILD_RESULT" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
-          
-          if [ -z "$BUILD_ID" ]; then
-            echo "Failed to extract build ID from build result"
+          if [ ! -f "artifacts/app-release.aab" ]; then
+            echo "Failed to build app bundle"
             exit 1
           fi
           
-          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
-          echo "Build ID: $BUILD_ID"
-          
-      - name: 📥 Download build artifact
-        run: |
-          echo "Downloading build artifact for build ${{ env.BUILD_ID }}..."
-          mkdir -p artifacts
-          
-          # Try to download the build artifact with retries
-          MAX_RETRIES=5
-          RETRY_COUNT=0
-          SUCCESS=false
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
-            if eas build:download --build-id ${{ env.BUILD_ID }} --output=artifacts/app-release.aab --non-interactive; then
-              SUCCESS=true
-              echo "Successfully downloaded app-release.aab"
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "Download failed, retrying in 30 seconds... (Attempt $RETRY_COUNT of $MAX_RETRIES)"
-                sleep 30
-              else
-                echo "Maximum retries reached. Failed to download artifact."
-                exit 1
-              fi
-            fi
-          done
-          
+          echo "Successfully built app-release.aab"
           ls -la artifacts/app-release.aab
           
       - name: 🔐 Setup Google Play Service Account
