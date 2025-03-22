@@ -212,7 +212,7 @@ jobs:
             git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }}) [skip ci]"
             
             # Push the changes back to the repository using GITHUB_TOKEN
-            git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" $BRANCH_NAME
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:$BRANCH_NAME
             
             echo "✅ Version changes committed and pushed to $BRANCH_NAME"
           else
