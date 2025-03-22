@@ -254,6 +254,11 @@ jobs:
       (needs.build.result == 'success' || needs.build.result == 'skipped'))
     
     steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+      
       - name: 📋 Check if skipping build
         run: |
           if [[ "${{ github.event.inputs.skip_build }}" == "true" ]]; then
@@ -288,6 +293,61 @@ jobs:
           
           echo "Using track: ${{ env.TRACK }}"
       
+      - name: 🔢 Get current version info when skipping build
+        if: github.event.inputs.skip_build == 'true'
+        id: current_version
+        run: |
+          # Extract current version info from app.json
+          CURRENT_VERSION=$(jq -r '.expo.version' app.json)
+          CURRENT_VERSION_CODE=$(jq -r '.expo.android.versionCode' app.json)
+          
+          # Increment version code for this deployment
+          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+          
+          echo "Current version: $CURRENT_VERSION"
+          echo "Current version code: $CURRENT_VERSION_CODE"
+          echo "New version code: $NEW_VERSION_CODE"
+          
+          # Update app.json with new version code
+          jq ".expo.android.versionCode = $NEW_VERSION_CODE" app.json > app.json.tmp
+          mv app.json.tmp app.json
+          
+          # Save the versions for later steps
+          echo "version_name=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
+          
+          # Set environment variables
+          echo "VERSION_NAME=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "VERSION_CODE=$NEW_VERSION_CODE" >> $GITHUB_ENV
+      
+      - name: 📝 Update version in files when skipping build
+        if: github.event.inputs.skip_build == 'true'
+        run: |
+          # Check if there are changes to commit
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected, updating files..."
+            
+            # Update README.md version badge
+            echo "Updating README.md version badge..."
+            sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-${{ env.VERSION_NAME }}/g" README.md
+            
+            # Commit the changes
+            git add app.json README.md
+            git commit -m "🔖 Bump version to ${{ env.VERSION_NAME }} (code: ${{ env.VERSION_CODE }}) [skip ci]"
+            git push
+          else
+            echo "No changes detected, skipping commit"
+          fi
+      
+      - name: 🔢 Set version variables from build job
+        if: github.event.inputs.skip_build != 'true'
+        run: |
+          echo "VERSION_NAME=${{ needs.build.outputs.version_name }}" >> $GITHUB_ENV
+          echo "VERSION_CODE=${{ needs.build.outputs.version_code }}" >> $GITHUB_ENV
+          
+          echo "Using version name: ${{ env.VERSION_NAME }}"
+          echo "Using version code: ${{ env.VERSION_CODE }}"
+      
       - name: 🔐 Setup Google Play Service Account
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service-account.json
@@ -300,3 +360,5 @@ jobs:
           releaseFiles: artifacts/app-release.aab
           track: ${{ env.TRACK }}
           status: completed
+          # Use the version code from either the build job or the version update step
+          versionCode: ${{ env.VERSION_CODE }}
