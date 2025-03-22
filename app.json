@@ -8,7 +8,6 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "_versioningNote": "Version and versionCode are automatically managed by GitHub Actions CI/CD. See .github/workflows/android-build-deploy.yml for details.",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.trickydex.app"
@@ -19,8 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.trickydex.app",
-      "versionCode": 13,
-      "_comment": "versionCode is automatically incremented by the CI/CD pipeline during builds"
+      "versionCode": 13
     },
     "web": {
       "bundler": "metro",

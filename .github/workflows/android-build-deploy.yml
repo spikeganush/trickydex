@@ -329,11 +329,13 @@ jobs:
             
             # Update README.md version badge
             echo "Updating README.md version badge..."
-            sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-${{ env.VERSION_NAME }}/g" README.md
+            VERSION_NAME="${{ steps.current_version.outputs.version_name }}"
+            VERSION_CODE="${{ steps.current_version.outputs.version_code }}"
+            sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION_NAME/g" README.md
             
             # Commit the changes
             git add app.json README.md
-            git commit -m "🔖 Bump version to ${{ env.VERSION_NAME }} (code: ${{ env.VERSION_CODE }}) [skip ci]"
+            git commit -m "🔖 Bump version to $VERSION_NAME (code: $VERSION_CODE) [skip ci]"
             git push
           else
             echo "No changes detected, skipping commit"
@@ -345,8 +347,8 @@ jobs:
           echo "VERSION_NAME=${{ needs.build.outputs.version_name }}" >> $GITHUB_ENV
           echo "VERSION_CODE=${{ needs.build.outputs.version_code }}" >> $GITHUB_ENV
           
-          echo "Using version name: ${{ env.VERSION_NAME }}"
-          echo "Using version code: ${{ env.VERSION_CODE }}"
+          echo "Using version name: ${{ needs.build.outputs.version_name }}"
+          echo "Using version code: ${{ needs.build.outputs.version_code }}"
       
       - name: 🔐 Setup Google Play Service Account
         run: |
@@ -360,5 +362,3 @@ jobs:
           releaseFiles: artifacts/app-release.aab
           track: ${{ env.TRACK }}
           status: completed
-          # Use the version code from either the build job or the version update step
-          versionCode: ${{ env.VERSION_CODE }}
