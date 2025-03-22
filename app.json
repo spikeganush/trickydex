@@ -2,7 +2,7 @@
   "expo": {
     "name": "TrickyDex",
     "slug": "TrickyDex",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -19,7 +19,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.trickydex.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "_comment": "versionCode is automatically incremented by the CI/CD pipeline during builds"
     },
     "web": {
