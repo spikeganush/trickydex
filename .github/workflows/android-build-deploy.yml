@@ -11,7 +11,7 @@ on:
   workflow_dispatch:  # Allow manual triggering
     inputs:
       skip_build:
-        description: 'Skip build and use the latest artifact'
+        description: 'Skip build and use the latest artifact (only use if you have previously successful builds)'
         type: boolean
         default: false
       track:
@@ -32,6 +32,7 @@ jobs:
     outputs:
       track: ${{ steps.set-track.outputs.track }}
       build_profile: ${{ steps.set-track.outputs.build_profile }}
+      artifact_id: ${{ steps.upload-artifact.outputs.artifact-id }}
       
     steps:
       - name: 🏗 Checkout repository
@@ -111,22 +112,34 @@ jobs:
           ls -la artifacts/app-release.aab
       
       - name: 📤 Upload build artifact
-        uses: actions/upload-artifact@v3
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
         with:
           name: android-app-bundle
           path: artifacts/app-release.aab
           retention-days: 5
+          compression-level: 0  # No compression for binary files
   
   deploy:
     name: 🚀 Deploy to Google Play
     needs: build
     runs-on: ubuntu-latest
-    # Always run deploy job, even if build is skipped
-    if: ${{ always() && (github.event.inputs.skip_build == 'true' || needs.build.result == 'success') }}
+    # Only run deploy job if build was successful or skipped intentionally
+    if: |
+      always() && 
+      (github.event.inputs.skip_build == 'true' || 
+      (needs.build.result == 'success' || needs.build.result == 'skipped'))
     
     steps:
+      - name: 📋 Check if skipping build
+        run: |
+          if [[ "${{ github.event.inputs.skip_build }}" == "true" ]]; then
+            echo "⚠️ Build step was skipped. Using previously uploaded artifact."
+            echo "Make sure you have a successful previous build!"
+          fi
+      
       - name: 📥 Download build artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: android-app-bundle
           path: artifacts
@@ -134,11 +147,12 @@ jobs:
       - name: 📋 Check artifact exists
         run: |
           if [ ! -f "artifacts/app-release.aab" ]; then
-            echo "No app bundle found. Make sure the build job completed successfully."
+            echo "❌ No app bundle found. Make sure the build job completed successfully."
+            echo "If you skipped the build, ensure you have a previous successful build with an artifact."
             exit 1
           fi
           
-          echo "Found app bundle:"
+          echo "✅ Found app bundle:"
           ls -la artifacts/app-release.aab
       
       - name: 🔍 Set track based on input or build job
