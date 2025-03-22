@@ -16,25 +16,25 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
+      - name: 🏗 Checkout repository
         uses: actions/checkout@v3
         
-      - name: Setup Node
+      - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
           
-      - name: Setup EAS
+      - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
       
-      - name: Set deployment track based on branch
+      - name: 🔍 Set deployment track based on branch
         id: set-track
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
@@ -51,36 +51,57 @@ jobs:
             echo "BUILD_PROFILE=preview" >> $GITHUB_ENV
           fi
           
-      - name: Build Android App
-        run: eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --wait
-          
-      - name: Download latest build
+      - name: 🚀 Build Android App
+        id: build
         run: |
-          # Get the latest build ID
-          BUILD_ID=$(eas build:list --json --limit=1 --platform=android --status=finished | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
+          echo "Building Android app with profile ${{ env.BUILD_PROFILE }}..."
+          BUILD_RESULT=$(eas build --platform android --profile ${{ env.BUILD_PROFILE }} --non-interactive --json --wait)
+          echo "Build completed"
+          
+          # Extract the build ID from the result
+          BUILD_ID=$(echo "$BUILD_RESULT" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
           
           if [ -z "$BUILD_ID" ]; then
-            echo "Could not find any finished builds. Exiting with error."
+            echo "Failed to extract build ID from build result"
             exit 1
           fi
           
-          echo "Downloading build $BUILD_ID..."
+          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          echo "Build ID: $BUILD_ID"
+          
+      - name: 📥 Download build artifact
+        run: |
+          echo "Downloading build artifact for build ${{ env.BUILD_ID }}..."
           mkdir -p artifacts
-          eas build:download --build-id $BUILD_ID --output=artifacts/app-release.aab --non-interactive
           
-          if [ ! -f "artifacts/app-release.aab" ]; then
-            echo "Failed to download artifact"
-            exit 1
-          fi
+          # Try to download the build artifact with retries
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          SUCCESS=false
           
-          echo "Successfully downloaded app-release.aab"
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+            if eas build:download --build-id ${{ env.BUILD_ID }} --output=artifacts/app-release.aab --non-interactive; then
+              SUCCESS=true
+              echo "Successfully downloaded app-release.aab"
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Download failed, retrying in 30 seconds... (Attempt $RETRY_COUNT of $MAX_RETRIES)"
+                sleep 30
+              else
+                echo "Maximum retries reached. Failed to download artifact."
+                exit 1
+              fi
+            fi
+          done
+          
           ls -la artifacts/app-release.aab
           
-      - name: Setup Google Play Service Account
+      - name: 🔐 Setup Google Play Service Account
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service-account.json
           
-      - name: Deploy to Google Play
+      - name: 🚀 Deploy to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: service-account.json
