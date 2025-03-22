@@ -217,3 +217,20 @@ The project uses EAS (Expo Application Services) for building and deploying:
   - `eas build --platform android`
   - `eas build --platform ios`
   - `eas submit` for app store submission
+
+### GitHub Actions CI/CD Pipeline
+
+The project includes an automated CI/CD pipeline using GitHub Actions:
+- Configuration in `.github/workflows/android-build-deploy.yml`
+- Automatically builds and deploys to Google Play based on branch:
+  - `dev` branch → Internal testing track
+  - `staging` branch → Closed testing track
+  - `main` branch → Production track
+- Required secrets:
+  - `EXPO_TOKEN`: Expo access token for building
+  - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: Google Play service account credentials
+
+To use the CI/CD pipeline:
+1. Push changes to the appropriate branch
+2. GitHub Actions will automatically build and deploy
+3. Monitor the workflow in the Actions tab of the repository
