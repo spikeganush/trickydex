@@ -19,7 +19,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.trickydex.app",
-      "versionCode": 2,
+      "versionCode": 10,
       "_comment": "versionCode is automatically incremented by the CI/CD pipeline during builds"
     },
     "web": {
