@@ -189,35 +189,26 @@ jobs:
           echo "version_name=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
       
-      - name: 📝 Commit version changes
+      - name: 📝 Update version in files
         run: |
           # Check if there are changes to commit
           if [[ -n "$(git status --porcelain)" ]]; then
-            echo "Changes detected, committing version update..."
-            
-            # Configure git with GitHub token authentication
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            
-            # Get current branch name
-            BRANCH_NAME="${{ env.BRANCH_NAME }}"
-            echo "Current branch: $BRANCH_NAME"
+            echo "Changes detected, updating files..."
             
             # Update README.md version badge
             echo "Updating README.md version badge..."
             sed -i "s|version-[0-9]\+\.[0-9]\+\.[0-9]\+-blue|version-${{ steps.version.outputs.version_name }}-blue|g" README.md
             
-            # Commit the changes
-            git add app.json README.md
-            git commit -m "chore: bump version to ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }}) [skip ci]"
-            
-            # Push the changes back to the repository using GITHUB_TOKEN
-            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:$BRANCH_NAME
-            
-            echo "✅ Version changes committed and pushed to $BRANCH_NAME"
+            echo "✅ Files updated with new version: ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }})"
           else
             echo "No changes to commit"
           fi
+      
+      - name: 📝 Commit and push version changes
+        uses: actions4git/add-commit-push@v1
+        with:
+          commit-message: "chore: bump version to ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }}) [skip ci]"
+          add-pathspec: "app.json README.md"
       
       - name: 🚀 Build Android App Bundle Locally
         run: |
