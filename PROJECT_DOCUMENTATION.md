@@ -54,7 +54,7 @@ Each trick includes:
 - Unique ID
 - Name
 - Description
-- Difficulty rating (1-10)
+- Difficulty rating (1-30)
 - Category
 - Variations (when applicable)
 
@@ -67,6 +67,31 @@ The BLADE game is a challenge-based game where players attempt to perform tricks
 - When a player spells "BLADE", they are eliminated
 - The last player standing wins
 - Single-player mode is also available for practice
+
+## Reference Documentation
+
+### TrickList.md
+
+The project includes a comprehensive reference document (`TrickList.md`) that serves as the definitive source of truth for all trick data in the application:
+
+- **Purpose**: Provides detailed documentation of all tricks, variations, entrances, and difficulty combinations
+- **Format**: Structured Markdown with clear sections for each trick category
+- **Content**:
+  - Full descriptions of each trick and its execution
+  - Base difficulty ratings on the 10-point scale
+  - Popularity ratings on the 10-point scale
+  - All possible variations with their respective difficulty additions
+  - All possible entrances with their respective difficulty additions
+  - Complete list of difficulty combinations for each trick
+  - Table of contents for easy navigation
+
+This document is invaluable for:
+- Developers implementing new features related to tricks
+- Content editors updating trick descriptions or difficulty ratings
+- Users who want to explore the comprehensive trick database outside the app
+- Maintaining consistency between the app data and documentation
+
+The data in this file serves as the source material for the `trick.ts` implementation, ensuring that all difficulty ratings and trick descriptions in the app accurately reflect the documented values.
 
 ## Component Breakdown
 
@@ -140,29 +165,29 @@ The TrickyDex game features a comprehensive difficulty management system that en
 ### Difficulty Components
 
 1. **Base Trick Difficulty**:
-   - Each trick has a base difficulty rating (1-10)
+   - Each trick has a base difficulty rating (1-30)
    - Higher numbers indicate more challenging tricks
 
 2. **Variation Difficulty**:
    - Optional variations add complexity to tricks
-   - Each variation has its own difficulty rating (1-10)
+   - Each variation has its own difficulty rating that adds to the base trick difficulty
 
 3. **Entrance Difficulty**:
    - Optional entrances (ways to initiate tricks) add additional complexity
-   - Each entrance has its own difficulty rating (1-10)
+   - Each entrance has its own difficulty rating that further adds to the total difficulty
 
 4. **Total Difficulty Calculation**:
    - Sum of base trick + variation + entrance difficulties
-   - Capped at a maximum of 10 for the final value
+   - Capped at a maximum of 30 for the final value
 
 ### Adaptive Difficulty
 
 The game intelligently adjusts difficulty based on player performance:
 
 - **Difficulty Preferences**:
-  - Easy mode: Favors tricks with difficulty ≤ 3
-  - Medium mode: Balances between difficulty 2-6
-  - Hard mode: Favors tricks with difficulty ≥ 4
+  - Easy mode: Favors tricks with difficulty ≤ 9
+  - Medium mode: Balances between difficulty 6-18
+  - Hard mode: Favors tricks with difficulty ≥ 12
 
 - **Dynamic Adjustment**:
   - System tracks player success/failure
@@ -172,7 +197,7 @@ The game intelligently adjusts difficulty based on player performance:
 
 ### Max Difficulty Setting
 
-Players can control the maximum difficulty of tricks with a user-adjustable setting (1-10):
+Players can control the maximum difficulty of tricks with a user-adjustable setting (1-30):
 
 - Accessible through UI controls during gameplay
 - Strictly enforced across base trick, variation, and entrance selection

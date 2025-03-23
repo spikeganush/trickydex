@@ -6,11 +6,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
 import { Link } from 'expo-router';
+import Constants from 'expo-constants';
 
 const HomeScreen = () => {
   const titleScale = useSharedValue(0);
   const router = useRouter();
   const { isInitialAppLoad, setInitialAppLoad } = useAppContext();
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
 
   useEffect(() => {
     if (isInitialAppLoad) {
@@ -55,6 +57,8 @@ const HomeScreen = () => {
           </Link>
         </View>
       </View>
+      
+      <Text style={styles.versionText}>v{appVersion}</Text>
     </LinearGradient>
   );
 };
@@ -109,6 +113,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontFamily: 'Roboto_700Bold',
+  },
+  versionText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 10,
+    fontFamily: 'Roboto_400Regular',
   },
 });
 

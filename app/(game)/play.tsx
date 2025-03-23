@@ -31,7 +31,7 @@ interface EnhancedGameState extends GameState {
   currentEntrance: Entrance | null;
   totalDifficulty: number;
   difficultyPreference: 'easy' | 'medium' | 'hard';
-  maxDifficulty: number; // Maximum difficulty level (1-10)
+  maxDifficulty: number; // Maximum difficulty level (1-30)
 }
 
 export default function GamePlayScreen() {
@@ -284,7 +284,7 @@ export default function GamePlayScreen() {
   // Function to adjust max difficulty
   const adjustMaxDifficulty = (amount: number) => {
     const newMaxDifficulty = Math.min(
-      10,
+      30,
       Math.max(1, gameState.maxDifficulty + amount)
     );
     setGameState({
@@ -470,7 +470,7 @@ export default function GamePlayScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.difficultyControls}>
           <Text style={styles.difficultyLabel}>
-            Max Difficulty: {gameState.maxDifficulty}/10
+            Max Difficulty: {gameState.maxDifficulty}/30
           </Text>
           <View style={styles.difficultyButtons}>
             <TouchableOpacity
@@ -486,10 +486,10 @@ export default function GamePlayScreen() {
             <TouchableOpacity
               style={[
                 styles.difficultyButton,
-                gameState.maxDifficulty >= 10 && styles.disabledButton,
+                gameState.maxDifficulty >= 30 && styles.disabledButton,
               ]}
               onPress={() => adjustMaxDifficulty(1)}
-              disabled={gameState.maxDifficulty >= 10}
+              disabled={gameState.maxDifficulty >= 30}
             >
               <Text style={styles.difficultyButtonText}>+</Text>
             </TouchableOpacity>
@@ -517,11 +517,11 @@ export default function GamePlayScreen() {
           </Text>
           <View style={styles.trickMeta}>
             <Text style={styles.difficultyText}>
-              Base Difficulty: {currentTrick.difficulty}/10
+              Base Difficulty: {currentTrick.difficulty}/30
             </Text>
             {gameState.totalDifficulty !== currentTrick.difficulty && (
               <Text style={styles.difficultyText}>
-                Total Difficulty: {gameState.totalDifficulty}/10
+                Total Difficulty: {gameState.totalDifficulty}/30
               </Text>
             )}
             <Text style={styles.difficultyText}>
@@ -530,7 +530,7 @@ export default function GamePlayScreen() {
                 gameState.difficultyPreference.slice(1)}
             </Text>
             <Text style={styles.difficultyText}>
-              Max Difficulty: {gameState.maxDifficulty}/10
+              Max Difficulty: {gameState.maxDifficulty}/30
             </Text>
           </View>
         </Animated.View>
