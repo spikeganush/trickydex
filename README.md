@@ -11,15 +11,16 @@
 
 TrickyDex is a mobile application for rollerblading enthusiasts that combines a comprehensive trick dictionary with an interactive BLADE game for practicing tricks with friends.
 
-<div style="display: flex; gap: 5px; align-items: center;">
-  <a href="https://postimg.cc/pynxcTbH" target="_blank"><img src="https://i.postimg.cc/2j066b0V/Screenshot-1742727917.png" alt="Screenshot-1742727917"/></a><br/><br/>
-<a href="https://postimg.cc/21TfLLv4" target="_blank"><img src="https://i.postimg.cc/fbQWFxRg/Screenshot-1742727921.png" alt="Screenshot-1742727921"/></a><br/><br/>
-<a href="https://postimg.cc/k27m5vVJ" target="_blank"><img src="https://i.postimg.cc/XYC7Q24C/Screenshot-1742727927.png" alt="Screenshot-1742727927"/></a><br/><br/>
-<a href="https://postimg.cc/3dXh7cxf" target="_blank"><img src="https://i.postimg.cc/BQyn5W93/Screenshot-1742727956.png" alt="Screenshot-1742727956"/></a><br/><br/>
-<a href="https://postimg.cc/hfWnkBc7" target="_blank"><img src="https://i.postimg.cc/tC7gVqcD/Screenshot-1742727968.png" alt="Screenshot-1742727968"/></a><br/><br/>
-<a href="https://postimg.cc/R3Fx7CQ2" target="_blank"><img src="https://i.postimg.cc/5t59M6H9/Screenshot-1742727983.png" alt="Screenshot-1742727983"/></a><br/><br/>
-
-</div>
+<p align="center">
+  <img src="https://i.postimg.cc/2j066b0V/Screenshot-1742727917.png" width="30%" />
+  <img src="https://i.postimg.cc/fbQWFxRg/Screenshot-1742727921.png" width="30%" />
+  <img src="https://i.postimg.cc/XYC7Q24C/Screenshot-1742727927.png" width="30%" />
+</p>
+<p align="center">
+  <img src="https://i.postimg.cc/BQyn5W93/Screenshot-1742727956.png" width="30%" />
+  <img src="https://i.postimg.cc/tC7gVqcD/Screenshot-1742727968.png" width="30%" />
+  <img src="https://i.postimg.cc/5t59M6H9/Screenshot-1742727983.png" width="30%" />
+</p>
 
 ## ✨ Features
 
