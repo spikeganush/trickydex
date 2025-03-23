@@ -243,6 +243,11 @@ The workflow includes an intelligent versioning system that:
    - Uses `[skip ci]` tag to prevent workflow loops
    - Maintains consistent versioning across builds
 
+4. **EAS Configuration**:
+   - Uses `"appVersionSource": "local"` in eas.json to ensure EAS Build uses version codes from app.json
+   - This is critical for proper version management in the CI/CD pipeline
+   - Without this setting, EAS would ignore the version code in app.json, causing version conflicts
+
 ### Required Secrets
 
 The workflow requires the following GitHub secrets:

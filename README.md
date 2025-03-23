@@ -62,6 +62,7 @@ The CI/CD pipeline automatically handles versioning:
 - 🔄 Version codes are automatically incremented for Google Play
 - 💾 Version changes are committed back to the repository
 - 🏷️ Commit messages with `#minor` or `#major` tags trigger corresponding version increments
+- ⚙️ Uses `"appVersionSource": "local"` in eas.json to ensure proper version management
 
 ### 🖱️ Manual Deployment
 
