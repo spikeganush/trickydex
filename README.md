@@ -10,16 +10,8 @@
 </div>
 
 TrickyDex is a mobile application for rollerblading enthusiasts that combines a comprehensive trick dictionary with an interactive BLADE game for practicing tricks with friends.
-<style>
-  .img__container {
-    display: flex;
-    gap: 5px;
-    img {
-      flex: 1;
-    }
-  }
-</style>
-<div class="img__container" align="center">
+
+<div style="display: flex; gap: 5px; align-items: center;">
   <a href="https://postimg.cc/pynxcTbH" target="_blank"><img src="https://i.postimg.cc/2j066b0V/Screenshot-1742727917.png" alt="Screenshot-1742727917"/></a><br/><br/>
 <a href="https://postimg.cc/21TfLLv4" target="_blank"><img src="https://i.postimg.cc/fbQWFxRg/Screenshot-1742727921.png" alt="Screenshot-1742727921"/></a><br/><br/>
 <a href="https://postimg.cc/k27m5vVJ" target="_blank"><img src="https://i.postimg.cc/XYC7Q24C/Screenshot-1742727927.png" alt="Screenshot-1742727927"/></a><br/><br/>
