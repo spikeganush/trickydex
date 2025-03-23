@@ -182,16 +182,21 @@ const TrickDetailScreen = () => {
             {trick.variations && trick.variations.length > 0 && (
               <View style={styles.variationsContainer}>
                 <Text style={styles.variationsTitle}>Variations</Text>
-                {trick.variations.map((variation, index) => (
-                  <View key={index} style={styles.variationItem}>
-                    <Ionicons
-                      name='chevron-forward'
-                      size={16}
-                      color='#D13B40'
-                    />
-                    <Text style={styles.variationText}>{variation}</Text>
-                  </View>
-                ))}
+                {trick.variations.map(
+                  (variation, index) =>
+                    variation && (
+                      <View key={index} style={styles.variationItem}>
+                        <Ionicons
+                          name='chevron-forward'
+                          size={16}
+                          color='#D13B40'
+                        />
+                        <Text style={styles.variationText}>
+                          {variation.name}
+                        </Text>
+                      </View>
+                    )
+                )}
               </View>
             )}
           </Animated.View>

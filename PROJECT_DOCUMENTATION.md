@@ -133,6 +133,62 @@ Displays the final results of the game:
 - Game statistics
 - Option to play again
 
+## Difficulty System
+
+The TrickyDex game features a comprehensive difficulty management system that ensures appropriate challenge levels for players:
+
+### Difficulty Components
+
+1. **Base Trick Difficulty**:
+   - Each trick has a base difficulty rating (1-10)
+   - Higher numbers indicate more challenging tricks
+
+2. **Variation Difficulty**:
+   - Optional variations add complexity to tricks
+   - Each variation has its own difficulty rating (1-10)
+
+3. **Entrance Difficulty**:
+   - Optional entrances (ways to initiate tricks) add additional complexity
+   - Each entrance has its own difficulty rating (1-10)
+
+4. **Total Difficulty Calculation**:
+   - Sum of base trick + variation + entrance difficulties
+   - Capped at a maximum of 10 for the final value
+
+### Adaptive Difficulty
+
+The game intelligently adjusts difficulty based on player performance:
+
+- **Difficulty Preferences**:
+  - Easy mode: Favors tricks with difficulty ≤ 3
+  - Medium mode: Balances between difficulty 2-6
+  - Hard mode: Favors tricks with difficulty ≥ 4
+
+- **Dynamic Adjustment**:
+  - System tracks player success/failure
+  - Automatically increases difficulty after multiple successful attempts
+  - Decreases difficulty after multiple failed attempts
+  - Creates a personalized progression curve for each player
+
+### Max Difficulty Setting
+
+Players can control the maximum difficulty of tricks with a user-adjustable setting (1-10):
+
+- Accessible through UI controls during gameplay
+- Strictly enforced across base trick, variation, and entrance selection
+- Ensures proper progression as player skill increases
+- Prevents overwhelming players with tricks beyond their current skill level
+
+### Trick Selection Algorithm
+
+The trick selection algorithm ensures appropriate challenge levels:
+
+- Uses weighted selection based on popularity ratings (1-10)
+- Filters tricks by selected categories and maximum difficulty
+- Ensures variations and entrances respect the maximum difficulty constraint
+- Implements a 30% chance to skip entrances for variety
+- Balances between challenge and accessibility based on difficulty preference
+
 ## State Management
 
 The app uses React Context API for state management through `AppContext.tsx`:

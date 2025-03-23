@@ -32,6 +32,8 @@ The BLADE game follows these rules:
 
 #### Game Features:
 - 🎯 Select specific trick categories to customize your game
+- 🔢 Adjustable difficulty system with settings from 1-10
+- 🎚️ Adaptive difficulty that responds to player performance
 - 📊 Track player progress and trick history
 - 🧭 Intuitive navigation between game screens
 - 🔊 Sound effects for button presses and game events

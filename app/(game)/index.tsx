@@ -14,26 +14,28 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrickCategory, trickCategories } from '../../types/trick';
 
 export default function GameScreen() {
-  const [players, setPlayers] = useState<string[]>(['', '']); // Start with 2 empty player fields
+  const [players, setPlayers] = useState<string[]>(['']); // Start with 1 empty player field
+  const [touchedFields, setTouchedFields] = useState<boolean[]>([false]); // Track which fields have been touched
+  const [maxDifficulty, setMaxDifficulty] = useState<number>(3); // Default max difficulty (1-10)
   const [selectedCategories, setSelectedCategories] = useState<TrickCategory[]>(
     [
       'soul_grinds',
       'groove_grinds',
       'special_grinds',
-      'air_tricks',
-      'spins',
-      'flips',
+      'topside_grinds',
     ]
   );
   const router = useRouter();
 
   const addPlayer = async () => {
     setPlayers((prev) => [...prev, '']);
+    setTouchedFields((prev) => [...prev, false]); // Add a new untouched field
   };
 
   const removePlayer = async (index: number) => {
     if (players.length > 1) {
       setPlayers((prev) => prev.filter((_, i) => i !== index));
+      setTouchedFields((prev) => prev.filter((_, i) => i !== index)); // Remove the corresponding touched state
     } else {
       Alert.alert('Minimum Players', 'You need at least 1 player for BLADE');
     }
@@ -43,6 +45,13 @@ export default function GameScreen() {
     const newPlayers = [...players];
     newPlayers[index] = text;
     setPlayers(newPlayers);
+    
+    // Mark this field as touched
+    if (!touchedFields[index]) {
+      const newTouchedFields = [...touchedFields];
+      newTouchedFields[index] = true;
+      setTouchedFields(newTouchedFields);
+    }
   };
 
   const toggleCategory = (category: TrickCategory) => {
@@ -64,11 +73,13 @@ export default function GameScreen() {
   const handleStartGame = () => {
     const validPlayers = players.filter((p) => p.trim() !== '');
     if (validPlayers.length >= 1) {
+      // For parameterized navigation, router.push is still the best approach
       router.push({
         pathname: '/(game)/play',
         params: {
           players: JSON.stringify(validPlayers),
           categories: JSON.stringify(selectedCategories),
+          maxDifficulty: maxDifficulty.toString(),
         },
       });
     } else {
@@ -105,7 +116,7 @@ export default function GameScreen() {
               <TextInput
                 style={[
                   styles.input,
-                  player.trim() === '' && styles.inputError,
+                  touchedFields[index] && player.trim() === '' && styles.inputError,
                 ]}
                 placeholder={`Player ${index + 1}`}
                 placeholderTextColor='rgba(255, 255, 255, 0.5)'
@@ -169,6 +180,29 @@ export default function GameScreen() {
                 <Text style={styles.ruleText}>{rule}</Text>
               </View>
             ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Difficulty Settings</Text>
+          <View style={styles.difficultyContainer}>
+            <Text style={styles.difficultyLabel}>Max Difficulty: {maxDifficulty}/10</Text>
+            <View style={styles.difficultyControls}>
+              <Pressable
+                style={[styles.difficultyButton, maxDifficulty <= 1 && styles.disabledButton]} 
+                onPress={() => setMaxDifficulty(Math.max(1, maxDifficulty - 1))}
+                disabled={maxDifficulty <= 1}
+              >
+                <Ionicons name='remove' size={20} color='#FFFFFF' />
+              </Pressable>
+              <Pressable
+                style={[styles.difficultyButton, maxDifficulty >= 10 && styles.disabledButton]} 
+                onPress={() => setMaxDifficulty(Math.min(10, maxDifficulty + 1))}
+                disabled={maxDifficulty >= 10}
+              >
+                <Ionicons name='add' size={20} color='#FFFFFF' />
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -290,6 +324,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'Roboto_400Regular',
     fontSize: 14,
+  },
+  difficultyContainer: {
+    marginTop: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    padding: 12,
+  },
+  difficultyLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  difficultyControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  difficultyButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 4,
+    padding: 8,
+    marginHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+  },
+  disabledButton: {
+    backgroundColor: 'rgba(76, 175, 80, 0.5)',
   },
   startButton: {
     backgroundColor: '#4CAF50',

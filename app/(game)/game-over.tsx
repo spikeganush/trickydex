@@ -169,17 +169,19 @@ export default function GameOverScreen() {
         )}
 
         <View style={styles.buttonContainer}>
-          <Pressable
-            style={styles.button}
-            onPress={() => router.push('/(game)')}
-          >
-            <Ionicons name='refresh' size={24} color='#FFFFFF' />
-            <Text style={styles.buttonText}>Play Again</Text>
-          </Pressable>
+          <Link href="/(game)" asChild>
+            <Pressable style={styles.button}>
+              <Ionicons name='refresh' size={24} color='#FFFFFF' />
+              <Text style={styles.buttonText}>Play Again</Text>
+            </Pressable>
+          </Link>
 
           <Pressable
             style={styles.button}
-            onPress={() => router.replace('/index')}
+            onPress={() => {
+              // Force navigation to the root app screen
+              router.push("/");
+            }}
           >
             <Ionicons name='home' size={24} color='#FFFFFF' />
             <Text style={styles.buttonText}>Home</Text>

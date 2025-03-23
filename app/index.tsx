@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
+import { Link } from 'expo-router';
 
 const HomeScreen = () => {
   const titleScale = useSharedValue(0);
@@ -39,21 +40,19 @@ const HomeScreen = () => {
         </Animated.View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/(tricks)')}
-          >
-            <Ionicons name='list' size={24} color='#FFFFFF' />
-            <Text style={styles.buttonText}>Trick Catalog</Text>
-          </TouchableOpacity>
+          <Link href="/(tricks)" asChild>
+            <TouchableOpacity style={styles.button}>
+              <Ionicons name='list' size={24} color='#FFFFFF' />
+              <Text style={styles.buttonText}>Trick Catalog</Text>
+            </TouchableOpacity>
+          </Link>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/(game)')}
-          >
-            <Ionicons name='game-controller' size={24} color='#FFFFFF' />
-            <Text style={styles.buttonText}>BLADE Game</Text>
-          </TouchableOpacity>
+          <Link href="/(game)" asChild>
+            <TouchableOpacity style={styles.button}>
+              <Ionicons name='game-controller' size={24} color='#FFFFFF' />
+              <Text style={styles.buttonText}>BLADE Game</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
     </LinearGradient>

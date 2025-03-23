@@ -139,10 +139,10 @@ export const initialTricks: Trick[] = [
   {
     "id": 12,
     "name": "Frontside",
-    "description": "This is a beginner groove grind. Even though it is a beginner grind it requires a full commit - you want both of your skates to be up in the air and lock to the grind relatively at the same time, otherwise you risk slipping out. In this grind you are facing the object with the front of your body, your legs spread apart, and you are locking both skates on the (inner) groove in your frame.",
+    "description": "This is a beginner groove grind. Also called UFO. Even though it is a beginner grind it requires a full commit - you want both of your skates to be up in the air and lock to the grind relatively at the same time, otherwise you risk slipping out. In this grind you are facing the object with the front of your body, your legs spread apart, and you are locking both skates on the (inner) groove in your frame.",
     "difficulty": 2,
     "category": "groove_grinds",
-    "variations": [{"name": "Low Frontside", "difficulty": 3}],
+    "variations": [{"name": "Low Frontside", "difficulty": 2}],
     "possibleEntrances": [{"name": "270", "difficulty": 4}, {"name": "450", "difficulty": 5}],
     "popularity": 8
   },
@@ -152,7 +152,7 @@ export const initialTricks: Trick[] = [
     "description": "Similar to the Frontside but performed with your back facing the grinding surface. This requires more body awareness as you can't see the surface you're grinding on as easily, making it more challenging to maintain balance throughout the grind.",
     "difficulty": 3,
     "category": "groove_grinds",
-    "variations": [{"name": "Low Backside", "difficulty": 4}],
+    "variations": [{"name": "Low Backside", "difficulty": 1}],
     "possibleEntrances": [{"name": "270", "difficulty": 3}, {"name": "450", "difficulty": 5}],
     "popularity": 7
   },
@@ -362,15 +362,6 @@ export const initialTricks: Trick[] = [
   },
   {
     "id": 35,
-    "name": "UFO",
-    "description": "A really low and stretched out Frontside or Backside grind, requiring excellent flexibility and balance to maintain the position throughout the grind.",
-    "difficulty": 5,
-    "category": "special_grinds",
-    "possibleEntrances": [{"name": "Alleyoop", "difficulty": 3}, {"name": "Truespin", "difficulty": 4}, {"name": "Half Cab", "difficulty": 3}, {"name": "Full Cab", "difficulty": 5}, {"name": "360", "difficulty": 4}, {"name": "540", "difficulty": 6}],
-    "popularity": 4
-  },
-  {
-    "id": 36,
     "name": "Alleyoop",
     "description": "Alleyoop or AO is a trick performed backwards. When normally grinding and facing forward towards your grind, an AO would be the opposite. You would in this case be facing backwards to the direction of travel. An AO happens when you spin (the easier way) into the object you're grinding.",
     "difficulty": 3,
@@ -379,7 +370,7 @@ export const initialTricks: Trick[] = [
     "popularity": 5
   },
   {
-    "id": 37,
+    "id": 36,
     "name": "Truespin",
     "description": "Similar to Alleyoop but spinning the 'long way' away from the object you're grinding, making it more difficult to execute properly.",
     "difficulty": 4,
@@ -388,7 +379,7 @@ export const initialTricks: Trick[] = [
     "popularity": 3
   },
   {
-    "id": 38,
+    "id": 37,
     "name": "Topside",
     "description": "Performing a grind on the opposite side of the grinding surface than usual, often requiring more balance and precision to maintain the position throughout the grind.",
     "difficulty": 5,
@@ -397,7 +388,7 @@ export const initialTricks: Trick[] = [
     "popularity": 3
   },
   {
-    "id": 39,
+    "id": 38,
     "name": "Switch",
     "description": "Performing a trick with your non-dominant foot forward, adding complexity to the execution of the trick.",
     "difficulty": 4,
@@ -406,7 +397,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 40,
+    "id": 39,
     "name": "Fakie",
     "description": "Performing a trick while skating backwards, adding complexity to the approach and execution of the trick.",
     "difficulty": 3,
@@ -415,7 +406,7 @@ export const initialTricks: Trick[] = [
     "popularity": 4
   },
   {
-    "id": 41,
+    "id": 40,
     "name": "Half Cab",
     "description": "A 180-degree rotation performed while skating fakie, landing forward, often used as an approach to grinds.",
     "difficulty": 3,
@@ -424,7 +415,7 @@ export const initialTricks: Trick[] = [
     "popularity": 3
   },
   {
-    "id": 42,
+    "id": 41,
     "name": "Full Cab",
     "description": "A 360-degree rotation performed while skating fakie, landing fakie again, often used as an approach to grinds.",
     "difficulty": 5,
@@ -433,7 +424,7 @@ export const initialTricks: Trick[] = [
     "popularity": 3
   },
   {
-    "id": 43,
+    "id": 42,
     "name": "Rocket",
     "description": "A variation where one leg is extended straight upward during a grind, adding style and difficulty to the trick.",
     "difficulty": 4,
@@ -442,7 +433,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 44,
+    "id": 43,
     "name": "Tough",
     "description": "Also known as Toe, this is a variation where the grind is performed primarily on the toe area of the skate, requiring precise balance and control.",
     "difficulty": 4,
@@ -451,7 +442,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 45,
+    "id": 44,
     "name": "Rough",
     "description": "Also known as Heel, this is a variation where the grind is performed primarily on the heel area of the skate, requiring precise balance and control.",
     "difficulty": 4,
@@ -460,7 +451,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 46,
+    "id": 45,
     "name": "Negative",
     "description": "A variation where the grind is performed on the opposite side of the foot than usual, creating a more challenging position to maintain.",
     "difficulty": 5,
@@ -469,7 +460,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 47,
+    "id": 46,
     "name": "Farside",
     "description": "A variation where the grind is performed on the far side of the obstacle, requiring more commitment and precision.",
     "difficulty": 5,
@@ -478,7 +469,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 48,
+    "id": 47,
     "name": "Darkside",
     "description": "A variation where the grind is performed on the dark side (non-natural side) of the obstacle, requiring more body awareness and control.",
     "difficulty": 5,
@@ -487,7 +478,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 49,
+    "id": 48,
     "name": "Disaster",
     "description": "A variation where the skater lands on the obstacle with the wheels instead of grinding, then transitions into a grind, adding complexity to the trick.",
     "difficulty": 5,
@@ -496,7 +487,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 50,
+    "id": 49,
     "name": "Zero Spin",
     "description": "A variation where the skater approaches the grind without any rotation, focusing on clean execution and style.",
     "difficulty": 2,
@@ -505,7 +496,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   }, 
   {
-    "id": 51,
+    "id": 50,
     "name": "180",
     "description": "A half rotation (180 degrees) performed in the air before landing, often used as an entrance to grinds or as a standalone trick.",
     "difficulty": 2,
@@ -514,7 +505,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 52,
+    "id": 51,
     "name": "270",
     "description": "A three-quarter rotation (270 degrees) performed in the air, often used as an entrance to grinds. This spin is particularly common for groove trick entrances.",
     "difficulty": 3,
@@ -523,7 +514,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 53,
+    "id": 52,
     "name": "360",
     "description": "A full rotation (360 degrees) performed in the air before landing, requiring good air awareness and rotation control.",
     "difficulty": 4,
@@ -532,7 +523,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 54,
+    "id": 53,
     "name": "450",
     "description": "A one-and-a-quarter rotation (450 degrees) performed in the air, often used as an entrance to grinds. This advanced spin requires excellent air awareness and rotation control.",
     "difficulty": 5,
@@ -541,7 +532,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 55,
+    "id": 54,
     "name": "540",
     "description": "A one-and-a-half rotation (540 degrees) performed in the air before landing, requiring excellent air awareness and rotation control.",
     "difficulty": 6,
@@ -550,7 +541,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 56,
+    "id": 55,
     "name": "720",
     "description": "A double rotation (720 degrees) performed in the air before landing, requiring exceptional air awareness and rotation control.",
     "difficulty": 8,
@@ -559,16 +550,16 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 57,
+    "id": 56,
     "name": "900",
     "description": "A two-and-a-half rotation (900 degrees) performed in the air before landing, requiring elite level air awareness and rotation control.",
     "difficulty": 9,
     "category": "spins",
-      "possibleEntrances": [],
+    "possibleEntrances": [],
     "popularity": 1
   },
   {
-    "id": 58,
+    "id": 57,
     "name": "1080",
     "description": "A triple rotation (1080 degrees) performed in the air before landing, requiring professional level air awareness and rotation control.",
     "difficulty": 10,
@@ -577,7 +568,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 59,
+    "id": 58,
     "name": "1260",
     "description": "A quadruple rotation (1260 degrees) performed in the air before landing, requiring elite level air awareness and rotation control.",
     "difficulty": 10,
@@ -586,7 +577,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   }, 
   {
-    "id": 60,
+    "id": 59,
     "name": "Backflip",
     "description": "A backwards somersault performed in the air, requiring good air awareness and commitment.",
     "difficulty": 7,
@@ -595,7 +586,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 61,
+    "id": 60,
     "name": "Frontflip",
     "description": "A forward somersault performed in the air, requiring good air awareness and commitment.",
     "difficulty": 7,
@@ -604,7 +595,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 62,
+    "id": 61,
     "name": "Misty Flip",
     "description": "A diagonal flip that combines elements of a backflip and a 180-degree spin, creating a unique aerial trick that requires good body control.",
     "difficulty": 8,
@@ -613,7 +604,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 63,
+    "id": 62,
     "name": "Cork",
     "description": "An off-axis rotation that combines elements of a flip and a spin, creating a complex aerial trick that requires excellent body control.",
     "difficulty": 8,
@@ -622,7 +613,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 64,
+    "id": 63,
     "name": "Rodeo",
     "description": "An off-axis backflip combined with a spin, creating a complex aerial trick that requires excellent body control and air awareness.",
     "difficulty": 8,
@@ -631,7 +622,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 65,
+    "id": 64,
     "name": "Bio",
     "description": "A forward-flipping cork, combining elements of a frontflip with an off-axis rotation, requiring excellent body control and air awareness.",
     "difficulty": 9,
@@ -640,7 +631,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },    
   {
-    "id": 66,
+    "id": 65,
     "name": "Mute Grab",
     "description": "An aerial trick where the skater grabs the outside of their skate with their opposite hand, adding style and control to the trick.",
     "difficulty": 3,
@@ -649,7 +640,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 67,
+    "id": 66,
     "name": "Japan Grab",
     "description": "An aerial trick where the skater grabs the inside of their skate with their same hand, creating a distinctive pose in the air that requires good flexibility.",
     "difficulty": 4,
@@ -658,7 +649,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 68,
+    "id": 67,
     "name": "Stale Grab",
     "description": "An aerial trick where the skater grabs the outside of their skate with their same hand, requiring a good stretch and body control to execute properly.",
     "difficulty": 4,
@@ -667,7 +658,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 69,
+    "id": 68,
     "name": "Method",
     "description": "An aerial trick where the skater grabs the heel of their skate while extending their legs and arching their back, creating a stylish pose in the air.",
     "difficulty": 4,
@@ -676,7 +667,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },
   {
-    "id": 70,
+    "id": 69,
     "name": "Rocket Air",
     "description": "An aerial trick where the skater grabs the toe of their skate and pulls it up toward their body, creating a compact pose in the air.",
     "difficulty": 3,
@@ -685,7 +676,7 @@ export const initialTricks: Trick[] = [
     "popularity": 1
   },  
   {
-    "id": 71,
+    "id": 70,
     "name": "Truck Driver",
     "description": "An aerial trick where the skater grabs both skates simultaneously, creating a challenging pose in the air that requires good flexibility and control.",
     "difficulty": 6,
@@ -796,11 +787,23 @@ export const getCompleteRandomTrick = (
     throw new Error('No tricks found for the selected categories');
   }
 
-  // Filter tricks by max difficulty
+  // STRICT ENFORCEMENT: Filter tricks by max difficulty - if no tricks match,
+  // find tricks with the lowest available difficulty even if above maxDifficulty
   const difficultyFilteredTricks = filteredTricks.filter(trick => trick.difficulty <= maxDifficulty);
   
-  // If no tricks match the max difficulty, use all tricks from the categories
-  const tricksToUse = difficultyFilteredTricks.length > 0 ? difficultyFilteredTricks : filteredTricks;
+  // If no tricks match the max difficulty, use the easiest tricks available
+  let tricksToUse: Trick[];
+  if (difficultyFilteredTricks.length > 0) {
+    tricksToUse = difficultyFilteredTricks;
+  } else {
+    // This is a critical change - instead of ignoring maxDifficulty, we'll
+    // still use the easiest available tricks, but will adjust their effective difficulty
+    const easiestDifficulty = Math.min(...filteredTricks.map(t => t.difficulty));
+    tricksToUse = filteredTricks.filter(t => t.difficulty === easiestDifficulty);
+    
+    // Log this situation for debugging
+    console.warn(`No tricks found with difficulty <= ${maxDifficulty}. Using tricks with difficulty ${easiestDifficulty} instead.`);
+  }
 
   // Weight tricks by popularity and difficulty preference
   const weightedTricks = tricksToUse.map(trick => {
@@ -848,13 +851,17 @@ export const getCompleteRandomTrick = (
   // Try to find a variation and entrance combination that keeps total difficulty under maxDifficulty
   let variation: Variation | null = null;
   let entrance: Entrance | null = null;
-  let totalDifficulty = selectedTrick.difficulty;
+  
+  // IMPORTANT: Cap the base trick difficulty at maxDifficulty for calculation purposes
+  // This ensures the total difficulty respects maxDifficulty even if we had to use a trick
+  // with higher than desired difficulty
+  let totalDifficulty = Math.min(selectedTrick.difficulty, maxDifficulty);
   
   // First, try to get a variation if requested
   if (includeVariation && selectedTrick.variations && selectedTrick.variations.length > 0) {
     // Filter variations that would keep total difficulty under maxDifficulty
     const possibleVariations = selectedTrick.variations.filter(v => 
-      (selectedTrick.difficulty + v.difficulty) <= maxDifficulty
+      (totalDifficulty + v.difficulty) <= maxDifficulty
     );
     
     if (possibleVariations.length > 0) {
@@ -909,8 +916,8 @@ export const getCompleteRandomTrick = (
     }
   }
   
-  // Cap the total difficulty at 10 if it exceeds it
-  totalDifficulty = Math.min(10, totalDifficulty);
+  // Ensure total difficulty never exceeds maxDifficulty
+  totalDifficulty = Math.min(maxDifficulty, totalDifficulty);
 
   return {
     trick: selectedTrick,

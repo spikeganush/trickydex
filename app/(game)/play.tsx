@@ -12,13 +12,13 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useState, useEffect } from 'react';
-import { 
-  initialTricks, 
-  getTrickById, 
-  TrickCategory, 
+import {
+  initialTricks,
+  getTrickById,
+  TrickCategory,
   getCompleteRandomTrick,
   Variation,
-  Entrance
+  Entrance,
 } from '../../types/trick';
 import { GameState, Player } from '../../types/game';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -36,11 +36,15 @@ interface EnhancedGameState extends GameState {
 
 export default function GamePlayScreen() {
   const router = useRouter();
-  const { players: playersParam, categories: categoriesParam } =
-    useLocalSearchParams<{
-      players?: string;
-      categories?: string;
-    }>();
+  const {
+    players: playersParam,
+    categories: categoriesParam,
+    maxDifficulty: maxDifficultyParam,
+  } = useLocalSearchParams<{
+    players?: string;
+    categories?: string;
+    maxDifficulty?: string;
+  }>();
   const letterScale = useSharedValue(1);
   const letterRotate = useSharedValue(0);
   const trickScale = useSharedValue(0.9);
@@ -80,14 +84,13 @@ export default function GamePlayScreen() {
         }))
       : [];
 
+    // Parse maxDifficulty from URL parameter first so it's consistent
+    const parsedMaxDifficulty = maxDifficultyParam ? parseInt(maxDifficultyParam, 10) : 7;
+
     // Get a random trick for the first round from the selected categories
-    const { trick, variation, entrance, totalDifficulty } = getCompleteRandomTrick(
-      selectedCategories,
-      'medium',
-      true,
-      true,
-      7
-    );
+    // USING the parsedMaxDifficulty from URL instead of hardcoded value
+    const { trick, variation, entrance, totalDifficulty } =
+      getCompleteRandomTrick(selectedCategories, 'easy', true, true, parsedMaxDifficulty);
 
     return {
       players: initialPlayers,
@@ -101,7 +104,7 @@ export default function GamePlayScreen() {
       allPlayersAttempted: false, // Track if all players have attempted the current trick
       trickHistory: [], // Initialize empty trick history
       difficultyPreference: 'easy', // Default difficulty preference
-      maxDifficulty: 7, // Default max difficulty (1-10)
+      maxDifficulty: parsedMaxDifficulty, // Use the same parsed value for consistency
     };
   });
 
@@ -126,115 +129,167 @@ export default function GamePlayScreen() {
   });
 
   // Function to adjust difficulty based on player performance
-  const adjustDifficultyBasedOnPerformance = (success: boolean): 'easy' | 'medium' | 'hard' => {
+  const adjustDifficultyBasedOnPerformance = (
+    success: boolean
+  ): 'easy' | 'medium' | 'hard' => {
     const { difficultyPreference } = gameState;
-    
+
     // If player succeeded, potentially increase difficulty
     if (success) {
       // Check recent history to see if player is doing well
       const recentHistory = gameState.trickHistory.slice(-3);
-      const successCount = recentHistory.filter(attempt => 
-        attempt.playerName === currentPlayer.name && attempt.success
+      const successCount = recentHistory.filter(
+        (attempt) =>
+          attempt.playerName === currentPlayer.name && attempt.success
       ).length;
-      
+
       // If player has succeeded in most recent attempts, increase difficulty
       if (successCount >= 2) {
         if (difficultyPreference === 'easy') return 'medium';
         if (difficultyPreference === 'medium') return 'hard';
       }
-    } 
+    }
     // If player failed, potentially decrease difficulty
     else {
       // Check recent history to see if player is struggling
       const recentHistory = gameState.trickHistory.slice(-3);
-      const failCount = recentHistory.filter(attempt => 
-        attempt.playerName === currentPlayer.name && !attempt.success
+      const failCount = recentHistory.filter(
+        (attempt) =>
+          attempt.playerName === currentPlayer.name && !attempt.success
       ).length;
-      
+
       // If player has failed in most recent attempts, decrease difficulty
       if (failCount >= 2) {
         if (difficultyPreference === 'hard') return 'medium';
         if (difficultyPreference === 'medium') return 'easy';
       }
     }
-    
+
     // Default: keep current difficulty
     return difficultyPreference;
   };
 
   const getNewTrick = (difficultyPreference: 'easy' | 'medium' | 'hard') => {
-    // Get a trick that hasn't been used in this game yet and is from selected categories
+    // Get tricks that haven't been used and are from selected categories
     const unusedTricks = initialTricks.filter(
       (trick) =>
         !gameState.usedTrickIds.includes(trick.id) &&
-        selectedCategories.includes(trick.category as TrickCategory) &&
-        trick.difficulty <= gameState.maxDifficulty // Filter by max difficulty
+        selectedCategories.includes(trick.category as TrickCategory)
     );
 
     // If we've used all tricks from selected categories, reset the used tricks list
     if (unusedTricks.length === 0) {
-      return getCompleteRandomTrick(
+      const result = getCompleteRandomTrick(
         selectedCategories,
         difficultyPreference,
         true,
         true,
         gameState.maxDifficulty
       );
+      return result;
     }
 
-    const randomIndex = Math.floor(Math.random() * unusedTricks.length);
-    const selectedTrick = unusedTricks[randomIndex];
-    
-    // Get complete trick with variation and entrance based on the selected categories
-    // We're still using the same categories, but we want to ensure the selected trick is used
-    const result = getCompleteRandomTrick(
-      [selectedTrick.category as TrickCategory],
-      difficultyPreference,
-      true,
-      true,
-      gameState.maxDifficulty
-    );
-    
-    // If by chance we get a different trick than the one we selected (which is possible since
-    // getCompleteRandomTrick selects randomly from the category), force our selected trick
-    if (result.trick.id !== selectedTrick.id) {
-      // Calculate total difficulty while respecting max difficulty
-      let totalDifficulty = selectedTrick.difficulty;
-      let variation = null;
-      let entrance = null;
-      
-      // Try to add a variation if it doesn't exceed max difficulty
-      if (result.variation && (totalDifficulty + result.variation.difficulty) <= gameState.maxDifficulty) {
-        variation = result.variation;
-        totalDifficulty += variation.difficulty;
-      }
-      
-      // Try to add an entrance if it doesn't exceed max difficulty
-      if (result.entrance && (totalDifficulty + result.entrance.difficulty) <= gameState.maxDifficulty) {
-        entrance = result.entrance;
-        totalDifficulty += entrance.difficulty;
-      }
-      
-      // Cap the total difficulty at 10 if it exceeds it
-      totalDifficulty = Math.min(10, totalDifficulty);
-      
+    // Sort unused tricks by difficulty (ascending)
+    const sortedUnusedTricks = [...unusedTricks]
+      .filter((trick) => trick.difficulty <= gameState.maxDifficulty) // First filter by max difficulty
+      .sort((a, b) => a.difficulty - b.difficulty);
+
+    // If no tricks are available within max difficulty, use the easiest trick available
+    if (sortedUnusedTricks.length === 0) {
+      const easiestTrick = unusedTricks.sort(
+        (a, b) => a.difficulty - b.difficulty
+      )[0];
       return {
-        trick: selectedTrick,
-        variation,
-        entrance,
-        totalDifficulty
+        trick: easiestTrick,
+        variation: null,
+        entrance: null,
+        totalDifficulty: easiestTrick.difficulty,
       };
     }
-    
-    return result;
+
+    // Select a trick based on difficulty preference
+    let selectedTrick;
+    if (difficultyPreference === 'easy') {
+      // For easy, select from the easier half of tricks
+      const easyTricks = sortedUnusedTricks.slice(
+        0,
+        Math.ceil(sortedUnusedTricks.length / 2)
+      );
+      selectedTrick = easyTricks[Math.floor(Math.random() * easyTricks.length)];
+    } else if (difficultyPreference === 'hard') {
+      // For hard, select from the harder half of tricks
+      const hardTricks = sortedUnusedTricks.slice(
+        Math.floor(sortedUnusedTricks.length / 2)
+      );
+      selectedTrick =
+        hardTricks.length > 0
+          ? hardTricks[Math.floor(Math.random() * hardTricks.length)]
+          : sortedUnusedTricks[sortedUnusedTricks.length - 1];
+    } else {
+      // For medium, select from all tricks
+      selectedTrick =
+        sortedUnusedTricks[
+          Math.floor(Math.random() * sortedUnusedTricks.length)
+        ];
+    }
+
+    let totalDifficulty = selectedTrick.difficulty;
+    let variation = null;
+    let entrance = null;
+
+    // Only try to add variations/entrances if there's room under maxDifficulty
+    if (totalDifficulty < gameState.maxDifficulty) {
+      // Try to add a variation if available
+      if (selectedTrick.variations && selectedTrick.variations.length > 0) {
+        const possibleVariations = selectedTrick.variations.filter(
+          (v) => totalDifficulty + v.difficulty <= gameState.maxDifficulty
+        );
+
+        if (possibleVariations.length > 0) {
+          variation =
+            possibleVariations[
+              Math.floor(Math.random() * possibleVariations.length)
+            ];
+          totalDifficulty += variation.difficulty;
+        }
+      }
+
+      // Try to add an entrance if available and still under max difficulty
+      if (
+        selectedTrick.possibleEntrances &&
+        selectedTrick.possibleEntrances.length > 0
+      ) {
+        const possibleEntrances = selectedTrick.possibleEntrances.filter(
+          (e) => totalDifficulty + e.difficulty <= gameState.maxDifficulty
+        );
+
+        if (possibleEntrances.length > 0) {
+          entrance =
+            possibleEntrances[
+              Math.floor(Math.random() * possibleEntrances.length)
+            ];
+          totalDifficulty += entrance.difficulty;
+        }
+      }
+    }
+
+    return {
+      trick: selectedTrick,
+      variation,
+      entrance,
+      totalDifficulty,
+    };
   };
 
   // Function to adjust max difficulty
   const adjustMaxDifficulty = (amount: number) => {
-    const newMaxDifficulty = Math.min(10, Math.max(1, gameState.maxDifficulty + amount));
+    const newMaxDifficulty = Math.min(
+      10,
+      Math.max(1, gameState.maxDifficulty + amount)
+    );
     setGameState({
       ...gameState,
-      maxDifficulty: newMaxDifficulty
+      maxDifficulty: newMaxDifficulty,
     });
   };
 
@@ -388,20 +443,20 @@ export default function GamePlayScreen() {
   // Format the trick name with variation and entrance
   const formattedTrickName = () => {
     let name = '';
-    
+
     // Add entrance if available
     if (gameState.currentEntrance) {
       name += `${gameState.currentEntrance.name} `;
     }
-    
+
     // Add trick name
     name += currentTrick.name;
-    
+
     // Add variation if available
     if (gameState.currentVariation) {
       name += ` (${gameState.currentVariation.name})`;
     }
-    
+
     return name;
   };
 
@@ -414,17 +469,25 @@ export default function GamePlayScreen() {
     >
       <ScrollView style={styles.content}>
         <View style={styles.difficultyControls}>
-          <Text style={styles.difficultyLabel}>Max Difficulty: {gameState.maxDifficulty}/10</Text>
+          <Text style={styles.difficultyLabel}>
+            Max Difficulty: {gameState.maxDifficulty}/10
+          </Text>
           <View style={styles.difficultyButtons}>
-            <TouchableOpacity 
-              style={[styles.difficultyButton, gameState.maxDifficulty <= 1 && styles.disabledButton]} 
+            <TouchableOpacity
+              style={[
+                styles.difficultyButton,
+                gameState.maxDifficulty <= 1 && styles.disabledButton,
+              ]}
               onPress={() => adjustMaxDifficulty(-1)}
               disabled={gameState.maxDifficulty <= 1}
             >
               <Text style={styles.difficultyButtonText}>-</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.difficultyButton, gameState.maxDifficulty >= 10 && styles.disabledButton]} 
+            <TouchableOpacity
+              style={[
+                styles.difficultyButton,
+                gameState.maxDifficulty >= 10 && styles.disabledButton,
+              ]}
               onPress={() => adjustMaxDifficulty(1)}
               disabled={gameState.maxDifficulty >= 10}
             >
@@ -462,7 +525,9 @@ export default function GamePlayScreen() {
               </Text>
             )}
             <Text style={styles.difficultyText}>
-              Mode: {gameState.difficultyPreference.charAt(0).toUpperCase() + gameState.difficultyPreference.slice(1)}
+              Mode:{' '}
+              {gameState.difficultyPreference.charAt(0).toUpperCase() +
+                gameState.difficultyPreference.slice(1)}
             </Text>
             <Text style={styles.difficultyText}>
               Max Difficulty: {gameState.maxDifficulty}/10
