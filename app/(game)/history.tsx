@@ -157,6 +157,36 @@ export default function GameHistoryScreen() {
               </Text>
             </View>
 
+            <View style={styles.tricksContainer}>
+              {item.tricks.map((trick, index) => (
+                <View key={trick.trickId} style={styles.trickItem}>
+                  <View style={styles.trickHeader}>
+                    <Text style={styles.trickName}>
+                      Round {trick.roundNumber}: {trick.trickName}
+                    </Text>
+                  </View>
+                  <View style={styles.attemptsContainer}>
+                    {trick.attempts.map((attempt, i) => (
+                      <View key={`${trick.trickId}-${i}`} style={styles.attemptItem}>
+                        <Ionicons 
+                          name={attempt.success ? "checkmark-circle" : "close-circle"} 
+                          size={16} 
+                          color={attempt.success ? "#4CAF50" : "#D13B40"} 
+                          style={styles.attemptIcon}
+                        />
+                        <Text style={[
+                          styles.attemptText,
+                          attempt.success ? styles.successText : styles.failText
+                        ]}>
+                          {attempt.playerName}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+
             <Pressable
               style={styles.deleteButton}
               onPress={() => handleDeleteItem(item.id)}
@@ -349,8 +379,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   detailText: {
-    color: '#FFFFFF',
+    color: '#DDDDDD',
     fontSize: 14,
+    flex: 1,
   },
   playersList: {
     marginTop: 4,
@@ -373,6 +404,46 @@ const styles = StyleSheet.create({
   playerLetters: {
     color: '#FFFFFF',
     fontSize: 14,
+  },
+  tricksContainer: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  trickItem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  trickHeader: {
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  trickName: {
+    color: '#FFFFFF',
+    fontFamily: 'Roboto_500Medium',
+    fontSize: 14,
+  },
+  attemptsContainer: {
+    padding: 8,
+  },
+  attemptItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  attemptIcon: {
+    marginRight: 6,
+  },
+  attemptText: {
+    fontSize: 14,
+    fontFamily: 'Roboto_400Regular',
+  },
+  successText: {
+    color: '#A8E0A8',
+  },
+  failText: {
+    color: '#F2A3A5',
   },
   deleteButton: {
     flexDirection: 'row',

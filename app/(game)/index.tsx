@@ -241,26 +241,37 @@ export default function GameScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Difficulty Settings</Text>
-          <View style={styles.difficultyContainer}>
-            <Text style={styles.difficultyLabel}>Max Difficulty: {maxDifficulty}/10</Text>
-            <View style={styles.difficultyControls}>
-              <Pressable
-                style={[styles.difficultyButton, maxDifficulty <= 1 && styles.disabledButton]} 
-                onPress={() => setMaxDifficulty(Math.max(1, maxDifficulty - 1))}
-                disabled={maxDifficulty <= 1}
-              >
-                <Ionicons name='remove' size={20} color='#FFFFFF' />
-              </Pressable>
-              <Pressable
-                style={[styles.difficultyButton, maxDifficulty >= 10 && styles.disabledButton]} 
-                onPress={() => setMaxDifficulty(Math.min(10, maxDifficulty + 1))}
-                disabled={maxDifficulty >= 10}
-              >
-                <Ionicons name='add' size={20} color='#FFFFFF' />
-              </Pressable>
+          <Text style={styles.sectionTitle}>Game Settings</Text>
+          <Text style={styles.settingLabel}>Max Difficulty: {maxDifficulty}</Text>
+          <View style={styles.sliderContainer}>
+            <Pressable
+              style={styles.sliderButton}
+              onPress={() => setMaxDifficulty(Math.max(1, maxDifficulty - 3))}
+            >
+              <Ionicons name="remove" size={24} color="#FFFFFF" />
+            </Pressable>
+            <View style={styles.slider}>
+              <View
+                style={[
+                  styles.sliderTrack,
+                  { width: `${(maxDifficulty / 30) * 100}%` },
+                ]}
+              />
             </View>
+            <Pressable
+              style={styles.sliderButton}
+              onPress={() => setMaxDifficulty(Math.min(30, maxDifficulty + 3))}
+            >
+              <Ionicons name="add" size={24} color="#FFFFFF" />
+            </Pressable>
           </View>
+          <Pressable 
+            style={styles.historyButton}
+            onPress={() => router.push('/(game)/history')}
+          >
+            <Ionicons name="time-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.buttonText}>Game History</Text>
+          </Pressable>
         </View>
 
         <Pressable
@@ -382,35 +393,46 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto_400Regular',
     fontSize: 14,
   },
-  difficultyContainer: {
-    marginTop: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderRadius: 8,
-    padding: 12,
-  },
-  difficultyLabel: {
-    color: '#FFFFFF',
+  settingLabel: {
     fontSize: 16,
+    color: '#FFFFFF',
     marginBottom: 8,
-    textAlign: 'center',
+    fontFamily: 'Roboto_400Regular',
   },
-  difficultyControls: {
+  sliderContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  difficultyButton: {
+  sliderButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 4,
     padding: 8,
-    marginHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     width: 40,
     height: 40,
   },
-  disabledButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.5)',
+  slider: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginHorizontal: 8,
+  },
+  sliderTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#4CAF50',
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
   },
   startButton: {
     backgroundColor: '#4CAF50',
