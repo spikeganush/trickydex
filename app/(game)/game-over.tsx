@@ -1,19 +1,22 @@
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
-import { Player, TrickAttempt } from '../../types/game';
+import { Player, TrickAttempt, GameHistoryItem, GameHistoryPlayer, GameHistoryTrick } from '../../types/game';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getTrickById } from '../../types/trick';
+import { saveGameHistory } from '../../utils/storage';
 
 export default function GameOverScreen() {
-  const { playersData, trickHistory: trickHistoryParam } =
+  const { playersData, trickHistory: trickHistoryParam, gameSettings: gameSettingsParam } =
     useLocalSearchParams<{
       playersData?: string;
       trickHistory?: string;
+      gameSettings?: string;
     }>();
   const router = useRouter();
   const [showHistory, setShowHistory] = useState(false);
+  const [historySaved, setHistorySaved] = useState(false);
 
   if (!playersData) {
     return (
@@ -27,6 +30,9 @@ export default function GameOverScreen() {
   const trickHistory: TrickAttempt[] = trickHistoryParam
     ? JSON.parse(trickHistoryParam)
     : [];
+  const gameSettings = gameSettingsParam 
+    ? JSON.parse(gameSettingsParam)
+    : { maxDifficulty: 30, selectedCategories: [], difficultyPreference: 'medium' };
 
   // Sort players by letters (fewer is better)
   const sortedPlayers = [...players].sort((a, b) => {
@@ -59,6 +65,81 @@ export default function GameOverScreen() {
   const toggleHistory = async () => {
     setShowHistory(!showHistory);
   };
+
+  // Save game history
+  useEffect(() => {
+    if (historySaved || !playersData || trickHistory.length === 0) return;
+
+    const saveHistory = async () => {
+      try {
+        // Create game history players
+        const historyPlayers: GameHistoryPlayer[] = players.map(player => ({
+          id: player.id,
+          name: player.name,
+          finalLetters: [...player.letters],
+          isWinner: player === winner && isWinner
+        }));
+
+        // Group trick attempts by roundNumber
+        const tricksByRound: Record<number, TrickAttempt[]> = {};
+        trickHistory.forEach(attempt => {
+          if (!tricksByRound[attempt.roundNumber]) {
+            tricksByRound[attempt.roundNumber] = [];
+          }
+          tricksByRound[attempt.roundNumber].push(attempt);
+        });
+
+        // Create game history tricks
+        const historyTricks: GameHistoryTrick[] = Object.entries(tricksByRound).map(([round, attempts]) => {
+          const trickId = attempts[0].trickId;
+          const trick = getTrickById(trickId);
+          
+          return {
+            trickId,
+            trickName: trick?.name || `Unknown Trick #${trickId}`,
+            roundNumber: parseInt(round),
+            attempts: attempts.map(attempt => ({
+              playerName: attempt.playerName,
+              success: attempt.success
+            }))
+          };
+        });
+
+        // Calculate game summary
+        let summary: string;
+        if (isTrainingMode) {
+          summary = `Training session - ${players[0].letters.length === 5 ? 'Eliminated' : 'Practiced'} with ${trickHistory.length} attempts`;
+        } else if (isWinner) {
+          summary = `${winner.name} won against ${players.length - 1} player${players.length > 2 ? 's' : ''}`;
+        } else {
+          summary = `All players were eliminated - Game wins!`;
+        }
+
+        // Create the game history item
+        const gameHistoryItem: GameHistoryItem = {
+          id: Date.now().toString(), // Use timestamp as ID
+          date: new Date().toISOString(),
+          duration: Math.max(1, Math.floor(trickHistory.length / players.length) * 2), // Estimate duration in minutes
+          players: historyPlayers,
+          tricks: historyTricks,
+          settings: {
+            maxDifficulty: gameSettings.maxDifficulty,
+            selectedCategories: gameSettings.selectedCategories,
+            difficultyPreference: gameSettings.difficultyPreference
+          },
+          summary
+        };
+
+        // Save to storage
+        await saveGameHistory(gameHistoryItem);
+        setHistorySaved(true);
+      } catch (error) {
+        console.error('Failed to save game history:', error);
+      }
+    };
+
+    saveHistory();
+  }, [playersData, trickHistory, historySaved]);
 
   return (
     <View style={styles.container}>

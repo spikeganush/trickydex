@@ -370,6 +370,11 @@ export default function GamePlayScreen() {
           params: {
             playersData: JSON.stringify(updatedPlayers),
             trickHistory: JSON.stringify(updatedTrickHistory),
+            gameSettings: JSON.stringify({
+              maxDifficulty: gameState.maxDifficulty,
+              selectedCategories,
+              difficultyPreference: newDifficultyPreference
+            })
           },
         });
         return;
@@ -442,6 +447,11 @@ export default function GamePlayScreen() {
           params: {
             playersData: JSON.stringify(updatedPlayers),
             trickHistory: JSON.stringify(updatedTrickHistory),
+            gameSettings: JSON.stringify({
+              maxDifficulty: gameState.maxDifficulty,
+              selectedCategories,
+              difficultyPreference: newDifficultyPreference
+            })
           },
         });
         return;
