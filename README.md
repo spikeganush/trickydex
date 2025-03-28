@@ -48,6 +48,14 @@ The BLADE game follows these rules:
 - 🧭 Intuitive navigation between game screens
 - 🔊 Sound effects for button presses and game events
 - 🤝 Fair elimination system that allows for ties when multiple players fail the same trick
+- 💾 Persistent storage that remembers player names and game settings between sessions
+
+### 🔄 Persistent Memory
+- 👤 Automatically saves player names for future games
+- ⚙️ Remembers difficulty preferences and settings
+- 🎯 Stores selected trick categories
+- 🎛️ Saves maximum difficulty level (1-30)
+- 🔄 No need to reconfigure game settings each time you play
 
 ## 🚧 Development Status
 
@@ -122,6 +130,7 @@ To contribute:
 - 📘 TypeScript
 - 🧭 Expo Router for navigation
 - 🔊 Expo Audio for sound effects
+- 💾 AsyncStorage for data persistence
 - 🔄 GitHub Actions for CI/CD
 - 🏗️ EAS Build for local builds
 

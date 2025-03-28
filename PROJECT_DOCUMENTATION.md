@@ -13,6 +13,7 @@ TrickyDex is a React Native mobile application built with Expo that serves as a 
 - **Styling**: StyleSheet API with LinearGradient for backgrounds
 - **Icons**: Expo Vector Icons (Ionicons)
 - **Typography**: Google Fonts (Roboto family)
+- **Storage**: AsyncStorage for persisting player data and game settings
 
 ## Project Structure
 
@@ -35,6 +36,7 @@ TrickyDexAi/
 │   ├── trick.ts              # Trick-related types and data
 │   └── game.ts               # Game-related types
 └── utils/                    # Utility functions
+    └── storage.ts            # AsyncStorage utilities for data persistence
 ```
 
 ## Core Features
@@ -72,8 +74,18 @@ The BLADE game is a challenge-based game where players attempt to perform tricks
   - Multiple players are eliminated on the same trick (tie/draw)
 - Fair elimination system: if multiple players fail on the same trick and would spell BLADE, they tie rather than unfairly eliminating only the first player who failed
 - Single-player mode is also available for practice
+- Player names and game settings are remembered between sessions using local storage
 
-This fairness feature ensures that when multiple players are at "BLAD" and fail on the same trick, they tie rather than unfairly eliminating only the first player who failed.
+### 3. Persistent Storage
+
+The app implements local storage to enhance the user experience by remembering:
+
+- Player names from previous games
+- Difficulty preferences
+- Selected trick categories
+- Maximum difficulty settings
+
+This ensures that when a user returns to the app, their previous game configurations are automatically loaded, creating a seamless and personalized experience.
 
 ## Reference Documentation
 
@@ -146,6 +158,8 @@ Allows players to set up a new game:
 - Select trick categories to include
 - View game rules
 - Start game button
+- Automatically loads previously saved player names and game settings
+- Saves player configurations as they're updated
 
 #### Game Play (`app/(game)/play.tsx`)
 
@@ -156,6 +170,7 @@ The main game screen where:
 - Tracks game progress
 - Handles player elimination
 - Animates trick reveals and letter additions
+- Saves difficulty preferences as they're adjusted
 
 #### Game Over (`app/(game)/game-over.tsx`)
 
@@ -199,8 +214,13 @@ The game intelligently adjusts difficulty based on player performance:
 - **Dynamic Adjustment**:
   - System tracks player success/failure
   - Automatically increases difficulty after multiple successful attempts
-  - Decreases difficulty after multiple failed attempts
-  - Creates a personalized progression curve for each player
+  - Automatically decreases difficulty after multiple failed attempts
+  - Difficulty preference is saved between sessions
+
+- **User Controls**:
+  - Players can manually adjust the maximum difficulty (1-30)
+  - Setting persists between game sessions
+  - Controls are accessible directly from the game screen
 
 ### Max Difficulty Setting
 
@@ -220,6 +240,21 @@ The trick selection algorithm ensures appropriate challenge levels:
 - Ensures variations and entrances respect the maximum difficulty constraint
 - Implements a 30% chance to skip entrances for variety
 - Balances between challenge and accessibility based on difficulty preference
+
+## Persistent Storage System
+
+The app implements a robust local storage system using AsyncStorage to save and retrieve:
+
+- **Player Names**: The app remembers player names between sessions, so returning players don't need to re-enter their information
+- **Game Settings**: Including selected trick categories, maximum difficulty, and difficulty preferences
+- **Storage Implementation**: Utilities in `utils/storage.ts` provide a clean API for saving and loading data
+- **Data Structure**: Storage keys are organized by data type to allow for selective loading and saving
+
+This storage system enhances the user experience by:
+- Reducing friction for returning players
+- Maintaining consistent game settings based on player preferences
+- Providing continuity between game sessions
+- Supporting a personalized experience for individual or group play
 
 ## State Management
 
@@ -279,16 +314,15 @@ The app features a dark theme with red accents inspired by traditional Pokédex 
 
 ## Future Development Opportunities
 
-1. **Data Persistence**: Implement AsyncStorage or a database to save user favorites and game history
+1. **Video Demonstrations**: Include video tutorials for each trick
 2. **User Accounts**: Add user authentication for personalized experiences
-3. **Video Demonstrations**: Include video tutorials for each trick
-4. **Community Features**: Allow users to share their progress or custom tricks
-5. **Advanced Filtering**: Implement more advanced search and filtering options
-6. **Trick Combinations**: Add support for trick combinations and sequences
-7. **Achievement System**: Implement achievements for learning tricks or winning games
-8. **Offline Support**: Ensure full functionality without internet connection
-9. **Localization**: Add support for multiple languages
-10. **Accessibility**: Improve accessibility features for all users
+3. **Community Features**: Allow users to share their progress or custom tricks
+4. **Advanced Filtering**: Implement more advanced search and filtering options
+5. **Trick Combinations**: Add support for trick combinations and sequences
+6. **Achievement System**: Implement achievements for learning tricks or winning games
+7. **Offline Support**: Ensure full functionality without internet connection
+8. **Localization**: Add support for multiple languages
+9. **Accessibility**: Improve accessibility features for all users
 
 ## CI/CD and Deployment
 
@@ -362,20 +396,3 @@ The project uses EAS (Expo Application Services) for building and deploying:
   - `eas build --platform android`
   - `eas build --platform ios`
   - `eas submit` for app store submission
-
-### GitHub Actions CI/CD Pipeline
-
-The project includes an automated CI/CD pipeline using GitHub Actions:
-- Configuration in `.github/workflows/android-build-deploy.yml`
-- Automatically builds and deploys to Google Play based on branch:
-  - `dev` branch → Internal testing track
-  - `staging` branch → Closed testing track
-  - `main` branch → Production track
-- Required secrets:
-  - `EXPO_TOKEN`: Expo access token for building
-  - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: Google Play service account credentials
-
-To use the CI/CD pipeline:
-1. Push changes to the appropriate branch
-2. GitHub Actions will automatically build and deploy
-3. Monitor the workflow in the Actions tab of the repository

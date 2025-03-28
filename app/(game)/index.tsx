@@ -7,11 +7,18 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { TrickCategory, trickCategories } from '../../types/trick';
+import { 
+  savePlayerNames, 
+  loadPlayerNames, 
+  saveGameSettings, 
+  loadMaxDifficulty, 
+  loadSelectedCategories 
+} from '../../utils/storage';
 
 export default function GameScreen() {
   const [players, setPlayers] = useState<string[]>(['']); // Start with 1 empty player field
@@ -25,17 +32,55 @@ export default function GameScreen() {
       'topside_grinds',
     ]
   );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
+  // Load saved player names and game settings on component mount
+  useEffect(() => {
+    const loadSavedData = async () => {
+      try {
+        // Load player names
+        const savedPlayers = await loadPlayerNames();
+        setPlayers(savedPlayers);
+        setTouchedFields(Array(savedPlayers.length).fill(false));
+        
+        // Load max difficulty
+        const savedMaxDifficulty = await loadMaxDifficulty();
+        setMaxDifficulty(savedMaxDifficulty);
+        
+        // Load selected categories
+        const savedCategories = await loadSelectedCategories() as TrickCategory[];
+        setSelectedCategories(savedCategories);
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadSavedData();
+  }, []);
+
+  // Save game settings when they change
+  useEffect(() => {
+    if (!isLoading) {
+      saveGameSettings(maxDifficulty, selectedCategories);
+    }
+  }, [maxDifficulty, selectedCategories, isLoading]);
+
   const addPlayer = async () => {
-    setPlayers((prev) => [...prev, '']);
+    const newPlayers = [...players, ''];
+    setPlayers(newPlayers);
     setTouchedFields((prev) => [...prev, false]); // Add a new untouched field
+    savePlayerNames(newPlayers);
   };
 
   const removePlayer = async (index: number) => {
     if (players.length > 1) {
-      setPlayers((prev) => prev.filter((_, i) => i !== index));
+      const newPlayers = players.filter((_, i) => i !== index);
+      setPlayers(newPlayers);
       setTouchedFields((prev) => prev.filter((_, i) => i !== index)); // Remove the corresponding touched state
+      savePlayerNames(newPlayers);
     } else {
       Alert.alert('Minimum Players', 'You need at least 1 player for BLADE');
     }
@@ -51,6 +96,15 @@ export default function GameScreen() {
       const newTouchedFields = [...touchedFields];
       newTouchedFields[index] = true;
       setTouchedFields(newTouchedFields);
+    }
+    
+    // Save player names after a short delay to avoid excessive writes
+    if (!isLoading) {
+      const timeoutId = setTimeout(() => {
+        savePlayerNames(newPlayers);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
     }
   };
 
@@ -73,6 +127,9 @@ export default function GameScreen() {
   const handleStartGame = () => {
     const validPlayers = players.filter((p) => p.trim() !== '');
     if (validPlayers.length >= 1) {
+      // Save the final player names before starting the game
+      savePlayerNames(validPlayers);
+      
       // For parameterized navigation, router.push is still the best approach
       router.push({
         pathname: '/(game)/play',

@@ -24,6 +24,7 @@ import { GameState, Player } from '../../types/game';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { saveGameSettings, loadGameSettings } from '../../utils/storage';
 
 // Enhanced game state to include variation and entrance
 interface EnhancedGameState extends GameState {
@@ -76,6 +77,12 @@ export default function GamePlayScreen() {
   };
 
   const [gameState, setGameState] = useState<EnhancedGameState>(() => {
+    // Parse maxDifficulty from URL parameter first so it's consistent
+    const parsedMaxDifficulty = maxDifficultyParam ? parseInt(maxDifficultyParam, 10) : 7;
+    const initialDifficultyPreference: 'easy' | 'medium' | 'hard' = 'easy';
+
+    // Load saved game settings - this will be initialized from AsyncStorage in the useEffect below
+    // Here we just use default values for initialization
     const initialPlayers = playersParam
       ? JSON.parse(playersParam).map((name: string, index: number) => ({
           id: String(index + 1),
@@ -84,13 +91,9 @@ export default function GamePlayScreen() {
         }))
       : [];
 
-    // Parse maxDifficulty from URL parameter first so it's consistent
-    const parsedMaxDifficulty = maxDifficultyParam ? parseInt(maxDifficultyParam, 10) : 7;
-
     // Get a random trick for the first round from the selected categories
-    // USING the parsedMaxDifficulty from URL instead of hardcoded value
     const { trick, variation, entrance, totalDifficulty } =
-      getCompleteRandomTrick(selectedCategories, 'easy', true, true, parsedMaxDifficulty);
+      getCompleteRandomTrick(selectedCategories, initialDifficultyPreference, true, true, parsedMaxDifficulty);
 
     return {
       players: initialPlayers,
@@ -103,10 +106,49 @@ export default function GamePlayScreen() {
       roundNumber: 1,
       allPlayersAttempted: false, // Track if all players have attempted the current trick
       trickHistory: [], // Initialize empty trick history
-      difficultyPreference: 'easy', // Default difficulty preference
-      maxDifficulty: parsedMaxDifficulty, // Use the same parsed value for consistency
+      difficultyPreference: initialDifficultyPreference, // Default difficulty preference
+      maxDifficulty: parsedMaxDifficulty, // Use the parsed value initially
     };
   });
+
+  // Load saved game settings on component mount
+  useEffect(() => {
+    const fetchGameSettings = async () => {
+      try {
+        const settings = await loadGameSettings();
+        
+        // Only update if we got settings and they're different from current state
+        if (settings) {
+          setGameState(prevState => ({
+            ...prevState,
+            maxDifficulty: settings.maxDifficulty ?? prevState.maxDifficulty,
+            difficultyPreference: settings.difficultyPreference ?? prevState.difficultyPreference,
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading game settings:', error);
+      }
+    };
+    
+    fetchGameSettings();
+  }, []);
+
+  // Save game settings when max difficulty or difficulty preference changes
+  useEffect(() => {
+    const saveSettings = async () => {
+      try {
+        await saveGameSettings(
+          gameState.maxDifficulty, 
+          selectedCategories as string[], 
+          gameState.difficultyPreference
+        );
+      } catch (error) {
+        console.error('Error saving game settings:', error);
+      }
+    };
+    
+    saveSettings();
+  }, [gameState.maxDifficulty, gameState.difficultyPreference, selectedCategories]);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const currentTrick = gameState.currentTrickId
@@ -407,6 +449,7 @@ export default function GamePlayScreen() {
       
       // If we're still playing, select a new trick for the next round
       const newTrickComplete = getNewTrick(newDifficultyPreference);
+
       newTrickId = newTrickComplete.trick.id;
       newVariation = newTrickComplete.variation;
       newEntrance = newTrickComplete.entrance;
