@@ -66,7 +66,14 @@ The BLADE game is a challenge-based game where players attempt to perform tricks
 - If a player fails a trick, they receive a letter (B-L-A-D-E)
 - When a player spells "BLADE", they are eliminated
 - The last player standing wins
+- The game can end in multiple ways:
+  - One player remains (standard win)
+  - All players are eliminated (the game wins)
+  - Multiple players are eliminated on the same trick (tie/draw)
+- Fair elimination system: if multiple players fail on the same trick and would spell BLADE, they tie rather than unfairly eliminating only the first player who failed
 - Single-player mode is also available for practice
+
+This fairness feature ensures that when multiple players are at "BLAD" and fail on the same trick, they tie rather than unfairly eliminating only the first player who failed.
 
 ## Reference Documentation
 

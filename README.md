@@ -37,14 +37,17 @@ The BLADE game follows these rules:
 2. If a player fails a trick, they get a letter (B-L-A-D-E)
 3. When a player spells BLADE, they're eliminated
 4. Last player standing wins
+5. If all players spell BLADE, the game wins
+6. If multiple players fail on the same trick and all spell BLADE, they tie (fairness rule)
 
 #### Game Features:
 - 🎯 Select specific trick categories to customize your game
-- 🔢 Adjustable difficulty system with settings from 1-10
+- 🔢 Adjustable difficulty system with settings from 1-30
 - 🎚️ Adaptive difficulty that responds to player performance
 - 📊 Track player progress and trick history
 - 🧭 Intuitive navigation between game screens
 - 🔊 Sound effects for button presses and game events
+- 🤝 Fair elimination system that allows for ties when multiple players fail the same trick
 
 ## 🚧 Development Status
 

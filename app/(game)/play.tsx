@@ -317,40 +317,22 @@ export default function GamePlayScreen() {
     if (!success) {
       const nextLetter = 'BLADE'[player.letters.length];
       player.letters.push(nextLetter);
-
-      // Check if player is eliminated
-      if (player.letters.length === 5) {
-        // For single player mode, just end the game
-        if (updatedPlayers.length === 1) {
-          router.replace({
-            pathname: '/(game)/game-over',
-            params: {
-              playersData: JSON.stringify(updatedPlayers),
-              trickHistory: JSON.stringify(updatedTrickHistory),
-            },
-          });
-          return;
-        }
-
-        // If only one player remains, end the game
-        const activePlayers = updatedPlayers.filter(
-          (p) => p.letters.length < 5
-        );
-        if (activePlayers.length <= 1) {
-          router.replace({
-            pathname: '/(game)/game-over',
-            params: {
-              playersData: JSON.stringify(updatedPlayers),
-              trickHistory: JSON.stringify(updatedTrickHistory),
-            },
-          });
-          return;
-        }
-      }
     }
 
-    // For single player mode, don't change player index
+    // Single player mode handling
     if (updatedPlayers.length === 1) {
+      // Check if player is eliminated
+      if (player.letters.length === 5) {
+        router.replace({
+          pathname: '/(game)/game-over',
+          params: {
+            playersData: JSON.stringify(updatedPlayers),
+            trickHistory: JSON.stringify(updatedTrickHistory),
+          },
+        });
+        return;
+      }
+      
       // Just get a new trick for the next round
       const newTrickComplete = getNewTrick(newDifficultyPreference);
 
@@ -375,31 +357,55 @@ export default function GamePlayScreen() {
       return;
     }
 
-    // Move to next player (skip eliminated players)
-    let nextPlayerIndex =
-      (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    while (updatedPlayers[nextPlayerIndex].letters.length === 5) {
+    // MULTIPLAYER MODE FROM HERE ON
+    
+    // Find the next active player
+    let nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    
+    // Skip eliminated players (those who already have BLADE)
+    while (nextPlayerIndex !== gameState.currentPlayerIndex && 
+           updatedPlayers[nextPlayerIndex].letters.length === 5) {
       nextPlayerIndex = (nextPlayerIndex + 1) % gameState.players.length;
     }
-
-    // Check if we've completed a full round (all players have attempted the current trick)
-    const isLastPlayerInRound =
-      nextPlayerIndex === 0 ||
-      (nextPlayerIndex < gameState.currentPlayerIndex &&
-        updatedPlayers
-          .slice(0, gameState.currentPlayerIndex + 1)
-          .some((p) => p.letters.length === 5));
-
-    // If all players have attempted the current trick, select a new trick for the next round
+    
+    // Check if we've completed a full round (all active players have attempted the current trick)
+    // This is true when either:
+    // 1. We've looped back to player 0, or
+    // 2. We've looped back to the starting player
+    const isLastPlayerInRound = 
+      nextPlayerIndex === 0 || 
+      nextPlayerIndex === gameState.currentPlayerIndex ||
+      // If all players after current have been eliminated
+      updatedPlayers
+        .slice(gameState.currentPlayerIndex + 1)
+        .every(p => p.letters.length === 5);
+    
+    // Prepare state for the next update
     let newTrickId = gameState.currentTrickId;
     let newVariation = gameState.currentVariation;
     let newEntrance = gameState.currentEntrance;
     let newTotalDifficulty = gameState.totalDifficulty;
     let usedTrickIds = [...gameState.usedTrickIds];
     let roundNumber = gameState.roundNumber;
-
+    
+    // Check for game over conditions, but ONLY after a full round is complete
     if (isLastPlayerInRound) {
-      // Select a new trick for the next round
+      // Count active players (not eliminated)
+      const activePlayers = updatedPlayers.filter(p => p.letters.length < 5);
+      
+      // If all players are eliminated OR only one player remains, end the game
+      if (activePlayers.length <= 1) {
+        router.replace({
+          pathname: '/(game)/game-over',
+          params: {
+            playersData: JSON.stringify(updatedPlayers),
+            trickHistory: JSON.stringify(updatedTrickHistory),
+          },
+        });
+        return;
+      }
+      
+      // If we're still playing, select a new trick for the next round
       const newTrickComplete = getNewTrick(newDifficultyPreference);
       newTrickId = newTrickComplete.trick.id;
       newVariation = newTrickComplete.variation;
@@ -407,12 +413,21 @@ export default function GamePlayScreen() {
       newTotalDifficulty = newTrickComplete.totalDifficulty;
       usedTrickIds = [...usedTrickIds, newTrickComplete.trick.id];
       roundNumber += 1;
-
+      
+      // Reset nextPlayerIndex to the first active player
+      for (let i = 0; i < updatedPlayers.length; i++) {
+        if (updatedPlayers[i].letters.length < 5) {
+          nextPlayerIndex = i;
+          break;
+        }
+      }
+      
       // Animate the new trick
       trickScale.value = 0.9;
       trickScale.value = withSpring(1, { damping: 10, stiffness: 100 });
     }
-
+    
+    // Update game state
     setGameState({
       players: updatedPlayers,
       currentPlayerIndex: nextPlayerIndex,
