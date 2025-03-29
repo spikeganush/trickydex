@@ -88,6 +88,33 @@ The app implements local storage to enhance the user experience by remembering:
 
 This ensures that when a user returns to the app, their previous game configurations are automatically loaded, creating a seamless and personalized experience.
 
+### 4. Save and Resume Game
+
+The save and resume feature allows players to exit a game and continue it later.
+
+- **Game State Types**:
+  - `EnhancedGameState`: Extends the base `GameState` interface to include additional properties needed for saving the complete game state, such as current variation, entrance, difficulty settings, and selected categories.
+  - `ActiveGameState`: Wraps the enhanced game state with a timestamp for when it was saved.
+
+- **Storage Functions**:
+  - `saveActiveGame()`: Saves the current game state with a timestamp.
+  - `loadActiveGame()`: Loads the saved game state if it exists.
+  - `clearActiveGame()`: Clears the saved game state when a game is completed or abandoned.
+
+- **User Interface**:
+  - **Game Setup Screen**: Shows a "Resume Game" button when a saved game exists, along with the timestamp of when it was saved. Players can choose to resume the game or delete the save.
+  - **Game Play Screen**: Automatically saves the game state when the player navigates away and shows a confirmation dialog.
+
+- **Navigation**:
+  - When resuming a game, the app navigates directly to the game play screen with the saved state loaded.
+  - When starting a new game, the app clears any existing saved state.
+
+- **Game Completion**:
+  - When a game is completed (a winner is determined), the saved state is automatically cleared.
+  - Players can also explicitly abandon a game, which will clear the saved state.
+
+This feature ensures that players never lose their progress and can pick up where they left off, making the app more user-friendly and accommodating to interrupted gameplay sessions.
+
 ## Reference Documentation
 
 ### TrickList.md
@@ -263,14 +290,47 @@ The app implements a robust local storage system using AsyncStorage to save and 
 
 - **Player Names**: The app remembers player names between sessions, so returning players don't need to re-enter their information
 - **Game Settings**: Including selected trick categories, maximum difficulty, and difficulty preferences
-- **Storage Implementation**: Utilities in `utils/storage.ts` provide a clean API for saving and loading data
-- **Data Structure**: Storage keys are organized by data type to allow for selective loading and saving
+- **Game History**: Store the history of completed games for the leaderboard feature
+- **Active Game State**: Store the current game state to enable the save and resume functionality
 
-This storage system enhances the user experience by:
-- Reducing friction for returning players
-- Maintaining consistent game settings based on player preferences
-- Providing continuity between game sessions
-- Supporting a personalized experience for individual or group play
+### Storage Keys
+
+The following storage keys are used:
+
+- `trickydex_player_names`: For storing player names from previous sessions.
+- `trickydex_difficulty_preference`: For storing the difficulty preference (easy, medium, hard).
+- `trickydex_max_difficulty`: For storing the maximum difficulty level (1-30).
+- `trickydex_selected_categories`: For storing the selected trick categories.
+- `trickydex_game_history`: For storing the history of completed games.
+- `trickydex_active_game`: For storing the active game state for the save/resume feature.
+
+### Storage Functions
+
+The following storage functions are available in the `storage.ts` file:
+
+1. **Player Names**:
+   - `savePlayerNames(names: string[]): Promise<void>`
+   - `loadPlayerNames(): Promise<string[]>`
+
+2. **Game Settings**:
+   - `saveGameSettings(maxDifficulty: number, selectedCategories: string[], difficultyPreference: string): Promise<void>`
+   - `loadGameSettings(): Promise<{ maxDifficulty: number; difficultyPreference: string; selectedCategories: string[] } | null>`
+   - `loadMaxDifficulty(): Promise<number>`
+   - `loadSelectedCategories(): Promise<string[]>`
+   - `loadDifficultyPreference(): Promise<'easy' | 'medium' | 'hard'>`
+
+3. **Game History**:
+   - `saveGameToHistory(game: GameHistoryItem): Promise<void>`
+   - `loadGameHistory(): Promise<GameHistoryList>`
+   - `clearGameHistory(): Promise<void>`
+
+4. **Active Game State**:
+   - `saveActiveGame(gameState: EnhancedGameState): Promise<void>`
+   - `loadActiveGame(): Promise<ActiveGameState | null>`
+   - `clearActiveGame(): Promise<void>`
+
+5. **General Storage**:
+   - `clearAllStorage(): Promise<void>`: Clear all app-related data from AsyncStorage.
 
 ## State Management
 

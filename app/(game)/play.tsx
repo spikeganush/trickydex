@@ -4,6 +4,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  BackHandler,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -11,7 +13,7 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   initialTricks,
   getTrickById,
@@ -20,19 +22,16 @@ import {
   Variation,
   Entrance,
 } from '../../types/trick';
-import { GameState, Player } from '../../types/game';
+import { GameState, Player, EnhancedGameState } from '../../types/game';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { saveGameSettings, loadGameSettings } from '../../utils/storage';
+import { saveGameSettings, loadGameSettings, saveActiveGame, loadActiveGame, clearActiveGame } from '../../utils/storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Enhanced game state to include variation and entrance
-interface EnhancedGameState extends GameState {
-  currentVariation: Variation | null;
-  currentEntrance: Entrance | null;
-  totalDifficulty: number;
-  difficultyPreference: 'easy' | 'medium' | 'hard';
-  maxDifficulty: number; // Maximum difficulty level (1-30)
+interface EnhancedGameStateWithSave extends EnhancedGameState {
+  // Any additional properties for the game play screen not in the interface
 }
 
 export default function GamePlayScreen() {
@@ -41,14 +40,17 @@ export default function GamePlayScreen() {
     players: playersParam,
     categories: categoriesParam,
     maxDifficulty: maxDifficultyParam,
+    resumeGame: resumeGameParam,
   } = useLocalSearchParams<{
     players?: string;
     categories?: string;
     maxDifficulty?: string;
+    resumeGame?: string;
   }>();
   const letterScale = useSharedValue(1);
   const letterRotate = useSharedValue(0);
   const trickScale = useSharedValue(0.9);
+  const isGameOver = useRef(false);
 
   // Parse selected categories or use all categories as default
   const selectedCategories: TrickCategory[] = categoriesParam
@@ -76,7 +78,7 @@ export default function GamePlayScreen() {
     });
   };
 
-  const [gameState, setGameState] = useState<EnhancedGameState>(() => {
+  const [gameState, setGameState] = useState<EnhancedGameStateWithSave>(() => {
     // Parse maxDifficulty from URL parameter first so it's consistent
     const parsedMaxDifficulty = maxDifficultyParam ? parseInt(maxDifficultyParam, 10) : 7;
     const initialDifficultyPreference: 'easy' | 'medium' | 'hard' = 'easy';
@@ -108,13 +110,53 @@ export default function GamePlayScreen() {
       trickHistory: [], // Initialize empty trick history
       difficultyPreference: initialDifficultyPreference, // Default difficulty preference
       maxDifficulty: parsedMaxDifficulty, // Use the parsed value initially
+      selectedCategories: selectedCategories, // Store selected categories
     };
   });
 
-  // Load saved game settings on component mount
+  // Load saved game state or settings on component mount
   useEffect(() => {
-    const fetchGameSettings = async () => {
+    const fetchGameData = async () => {
       try {
+        // Check if we should resume a saved game (explicitly from URL)
+        const shouldResumeGame = resumeGameParam === 'true';
+        
+        // Get categories from URL if present (this would be updated categories from setup screen)
+        const urlCategories = categoriesParam 
+          ? JSON.parse(categoriesParam) as TrickCategory[]
+          : null;
+        
+        const savedGame = await loadActiveGame();
+        
+        // If we have a saved game and should resume it
+        if (savedGame && shouldResumeGame) {
+          console.log('Resuming saved game from:', savedGame.timestamp);
+          
+          // Create a merged game state that respects category changes from the URL
+          const mergedGameState = {
+            ...savedGame.gameState,
+            // Use URL categories if they exist, otherwise use saved categories
+            selectedCategories: urlCategories || savedGame.gameState.selectedCategories
+          };
+          
+          // Important: Replace the game state with the merged one
+          setGameState(mergedGameState);
+          
+          // Re-save the game state with the updated categories to persist changes
+          if (urlCategories) {
+            console.log('Updating saved game with new categories:', urlCategories);
+            await saveActiveGame(mergedGameState);
+          }
+          
+          console.log('Game state restored with config:', {
+            difficulty: mergedGameState.difficultyPreference,
+            maxDifficulty: mergedGameState.maxDifficulty,
+            categories: mergedGameState.selectedCategories
+          });
+          return; // Exit early as we've loaded the saved game
+        }
+        
+        // If not resuming, load regular game settings
         const settings = await loadGameSettings();
         
         // Only update if we got settings and they're different from current state
@@ -123,15 +165,17 @@ export default function GamePlayScreen() {
             ...prevState,
             maxDifficulty: settings.maxDifficulty ?? prevState.maxDifficulty,
             difficultyPreference: settings.difficultyPreference ?? prevState.difficultyPreference,
+            // Store selected categories from URL or settings
+            selectedCategories: urlCategories || settings.selectedCategories || prevState.selectedCategories,
           }));
         }
       } catch (error) {
-        console.error('Error loading game settings:', error);
+        console.error('Error loading game data:', error);
       }
     };
     
-    fetchGameSettings();
-  }, []);
+    fetchGameData();
+  }, [resumeGameParam, categoriesParam]);
 
   // Save game settings when max difficulty or difficulty preference changes
   useEffect(() => {
@@ -149,6 +193,46 @@ export default function GamePlayScreen() {
     
     saveSettings();
   }, [gameState.maxDifficulty, gameState.difficultyPreference, selectedCategories]);
+
+  // Save game state when navigating away
+  useFocusEffect(() => {
+    // When screen comes into focus
+    const onBackPress = () => {
+      if (!isGameOver.current) {
+        // Save game state before navigating away
+        saveGameBeforeExit();
+        
+        // Show confirmation dialog
+        Alert.alert(
+          "Leaving Game",
+          "Your game progress has been saved. You can resume this game later.",
+          [
+            { text: "Resume", style: "cancel" },
+            { 
+              text: "Exit", 
+              onPress: () => router.back(),
+              style: "destructive" 
+            }
+          ]
+        );
+        return true; // Prevent default behavior
+      }
+      return false; // Let default behavior happen (go back)
+    };
+
+    // Add back button handler for Android
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    
+    // Create cleanup function
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      
+      // Don't save if game is over
+      if (!isGameOver.current) {
+        saveGameBeforeExit();
+      }
+    };
+  });
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const currentTrick = gameState.currentTrickId
@@ -400,6 +484,7 @@ export default function GamePlayScreen() {
         trickHistory: updatedTrickHistory,
         difficultyPreference: newDifficultyPreference,
         maxDifficulty: gameState.maxDifficulty,
+        selectedCategories: gameState.selectedCategories,
       });
       return;
     }
@@ -438,10 +523,16 @@ export default function GamePlayScreen() {
     // Check for game over conditions, but ONLY after a full round is complete
     if (isLastPlayerInRound) {
       // Count active players (not eliminated)
-      const activePlayers = updatedPlayers.filter(p => p.letters.length < 5);
-      
+      const activePlayers = updatedPlayers.filter(
+        (player) => player.letters.length < 5
+      );
+
       // If all players are eliminated OR only one player remains, end the game
-      if (activePlayers.length <= 1) {
+      if (
+        gameState.players.length > 1 &&
+        activePlayers.length === 1 &&
+        gameState.roundNumber > 1
+      ) {
         router.replace({
           pathname: '/(game)/game-over',
           params: {
@@ -494,7 +585,88 @@ export default function GamePlayScreen() {
       trickHistory: updatedTrickHistory,
       difficultyPreference: newDifficultyPreference,
       maxDifficulty: gameState.maxDifficulty,
+      selectedCategories: gameState.selectedCategories,
     });
+  };
+
+  // Save game state before exiting
+  const saveGameBeforeExit = async () => {
+    try {
+      // Don't save if game is over
+      if (isGameOver.current) return;
+      
+      // Don't save if no players
+      if (gameState.players.length === 0) return;
+      
+      // Make sure we're saving the most up-to-date categories
+      // This is crucial for preserving category changes
+      console.log('Saving game with categories:', gameState.selectedCategories);
+      
+      await saveActiveGame(gameState);
+      console.log('Game state saved successfully');
+    } catch (error) {
+      console.error('Error saving game state:', error);
+    }
+  };
+
+  // End the game, clear saved state, and navigate to game over screen
+  const endGame = () => {
+    isGameOver.current = true;
+    
+    // Clear the active game state
+    clearActiveGame()
+      .catch(error => console.error('Error clearing active game:', error));
+    
+    // Navigate to game over screen
+    router.push({
+      pathname: '/(game)/game-over',
+      params: {
+        players: JSON.stringify(gameState.players),
+      },
+    });
+  };
+
+  // Handling for the game over case - when all players except one have T.R.I.C.K
+  useEffect(() => {
+    // Count players who still don't have "TRICK" spelled out
+    const remainingPlayers = gameState.players.filter(
+      (player) => player.letters.length < 5
+    );
+
+    // Only navigate to game over screen if there's a winner (one player remaining without TRICK)
+    if (
+      gameState.players.length > 1 &&
+      remainingPlayers.length === 1 &&
+      gameState.roundNumber > 1
+    ) {
+      endGame();
+    }
+    
+    // If all players have TRICK (everyone lost), end the game
+    if (remainingPlayers.length === 0 && gameState.players.length > 0) {
+      endGame();
+    }
+  }, [gameState.players]);
+
+  // Add a function to abandon the current game explicitly
+  const abandonGame = () => {
+    Alert.alert(
+      "Abandon Game",
+      "Are you sure you want to abandon this game? All progress will be lost.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Abandon", 
+          onPress: () => {
+            isGameOver.current = true;
+            clearActiveGame()
+              .then(() => router.back())
+              .catch(error => console.error('Error clearing active game:', error));
+          },
+          style: "destructive" 
+        }
+      ]
+    );
   };
 
   if (!currentPlayer || !currentTrick) {
@@ -873,5 +1045,15 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  abandonButton: {
+    backgroundColor: '#FF6B6B',
+    padding: 8,
+    borderRadius: 4,
+  },
+  abandonButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

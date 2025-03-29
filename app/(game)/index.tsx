@@ -20,7 +20,10 @@ import {
   loadPlayerNames, 
   saveGameSettings, 
   loadMaxDifficulty, 
-  loadSelectedCategories 
+  loadSelectedCategories,
+  loadActiveGame,
+  clearActiveGame,
+  saveActiveGame
 } from '../../utils/storage';
 
 export default function GameScreen() {
@@ -37,6 +40,8 @@ export default function GameScreen() {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [sliderWidth, setSliderWidth] = useState<number>(200); // Default width
+  const [hasSavedGame, setHasSavedGame] = useState<boolean>(false); // Track if there's a saved game
+  const [savedGameDate, setSavedGameDate] = useState<string>(''); // Track when the game was saved
   const router = useRouter();
 
   // Create custom slider with PanResponder
@@ -63,7 +68,7 @@ export default function GameScreen() {
     },
   });
 
-  // Load saved player names and game settings on component mount
+  // Load saved player names, game settings, and check for saved game on component mount
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -72,13 +77,44 @@ export default function GameScreen() {
         setPlayers(savedPlayers);
         setTouchedFields(Array(savedPlayers.length).fill(false));
         
-        // Load max difficulty
+        // Check for saved game first to prioritize those settings if available
+        const activeGame = await loadActiveGame();
+        if (activeGame) {
+          setHasSavedGame(true);
+          // Format the date for display
+          const savedDate = new Date(activeGame.timestamp);
+          setSavedGameDate(savedDate.toLocaleString());
+          
+          // If we have a saved game, use its categories as the selected categories
+          // This ensures the UI shows the same categories that were used in the saved game
+          if (activeGame.gameState.selectedCategories && 
+              activeGame.gameState.selectedCategories.length > 0) {
+            console.log('Restoring categories from saved game:', activeGame.gameState.selectedCategories);
+            setSelectedCategories(activeGame.gameState.selectedCategories as TrickCategory[]);
+          }
+          
+          // Also restore the max difficulty from the saved game
+          if (activeGame.gameState.maxDifficulty) {
+            setMaxDifficulty(activeGame.gameState.maxDifficulty);
+          }
+          
+          // No need to continue loading other settings since we've got them from the saved game
+          setIsLoading(false);
+          return;
+        } else {
+          setHasSavedGame(false);
+        }
+        
+        // If no saved game, load settings from regular storage
         const savedMaxDifficulty = await loadMaxDifficulty();
         setMaxDifficulty(savedMaxDifficulty);
         
         // Load selected categories
         const savedCategories = await loadSelectedCategories() as TrickCategory[];
-        setSelectedCategories(savedCategories);
+        if (savedCategories && savedCategories.length > 0) {
+          console.log('Restoring categories from settings:', savedCategories);
+          setSelectedCategories(savedCategories);
+        }
       } catch (error) {
         console.error('Error loading saved data:', error);
       } finally {
@@ -165,6 +201,7 @@ export default function GameScreen() {
           players: JSON.stringify(validPlayers),
           categories: JSON.stringify(selectedCategories),
           maxDifficulty: maxDifficulty.toString(),
+          resumeGame: 'false',
         },
       });
     } else {
@@ -173,6 +210,71 @@ export default function GameScreen() {
         'Please add at least 1 player to start the game'
       );
     }
+  };
+  
+  const handleResumeGame = async () => {
+    try {
+      // Load the saved game first to extract necessary parameters
+      const savedGame = await loadActiveGame();
+      if (savedGame) {
+        // Update the saved game with the current category selection and difficulty
+        // This ensures that if the user modified the settings, those changes are saved
+        const updatedGameState = {
+          ...savedGame.gameState,
+          selectedCategories: selectedCategories,
+          maxDifficulty: maxDifficulty
+        };
+        
+        // Save the updated game state before resuming
+        await saveActiveGame(updatedGameState);
+        console.log('Updated saved game with current categories:', selectedCategories);
+        
+        // Navigate to the game screen with resume flag and necessary configuration
+        router.push({
+          pathname: '/(game)/play',
+          params: {
+            resumeGame: 'true',
+            // Pass the UPDATED configuration
+            maxDifficulty: maxDifficulty.toString(),
+            categories: JSON.stringify(selectedCategories),
+            // Original players list in case we need it
+            players: JSON.stringify(savedGame.gameState.players.map(p => p.name))
+          },
+        });
+      } else {
+        // If no saved game is found (unlikely but possible), show an error
+        Alert.alert(
+          "Error",
+          "Could not find a saved game to resume. Please start a new game."
+        );
+        setHasSavedGame(false);
+      }
+    } catch (error) {
+      console.error('Error resuming game:', error);
+      Alert.alert(
+        "Error",
+        "There was an error resuming your game. Please try again or start a new game."
+      );
+    }
+  };
+
+  const handleClearSavedGame = () => {
+    Alert.alert(
+      "Clear Saved Game",
+      "Are you sure you want to delete your saved game? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          onPress: async () => {
+            await clearActiveGame();
+            setHasSavedGame(false);
+            setSavedGameDate('');
+          },
+          style: "destructive" 
+        }
+      ]
+    );
   };
 
   const validPlayers = players.filter((p) => p.trim() !== '');
@@ -193,6 +295,31 @@ export default function GameScreen() {
             (B-L-A-D-E). Spell BLADE and you're out!
           </Text>
         </View>
+        
+        {/* Resume Game Button - only shown if a saved game exists */}
+        {hasSavedGame && (
+          <View style={styles.resumeContainer}>
+            <Text style={styles.savedGameText}>
+              You have a saved game from {savedGameDate}
+            </Text>
+            <View style={styles.resumeButtonRow}>
+              <Pressable
+                style={[styles.resumeButton, styles.primaryButton]}
+                onPress={handleResumeGame}
+              >
+                <Ionicons name="play-circle" size={18} color="#fff" />
+                <Text style={styles.resumeButtonText}>Resume Game</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.resumeButton, styles.secondaryButton]}
+                onPress={handleClearSavedGame}
+              >
+                <Ionicons name="trash-bin" size={18} color="#fff" />
+                <Text style={styles.resumeButtonText}>Delete Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Players</Text>
@@ -511,5 +638,45 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     fontFamily: 'Roboto_700Bold',
+  },
+  // Resume game styles
+  resumeContainer: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#555',
+  },
+  savedGameText: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  resumeButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  resumeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 4,
+    flex: 1,
+  },
+  primaryButton: {
+    backgroundColor: '#4A90E2',
+  },
+  secondaryButton: {
+    backgroundColor: '#E24A4A',
+  },
+  resumeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
 });

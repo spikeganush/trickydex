@@ -21,6 +21,22 @@ export interface GameState {
   trickHistory: TrickAttempt[]; // Track history of trick attempts
 }
 
+// Enhanced game state interface for saving complete game state with variation and entrance
+export interface EnhancedGameState extends GameState {
+  currentVariation: any | null; // Using any here as the Variation type is defined elsewhere
+  currentEntrance: any | null; // Using any here as the Entrance type is defined elsewhere
+  totalDifficulty: number;
+  difficultyPreference: 'easy' | 'medium' | 'hard';
+  maxDifficulty: number; // Maximum difficulty level (1-30)
+  selectedCategories?: string[]; // Categories selected for this game
+}
+
+// Active game state with timestamp for save/resume feature
+export interface ActiveGameState {
+  gameState: EnhancedGameState;
+  timestamp: string; // ISO date string
+}
+
 // New interfaces for game history
 export interface GameHistoryPlayer {
   id: string;

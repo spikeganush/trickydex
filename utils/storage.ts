@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GameHistoryItem, GameHistoryList } from '../types/game';
+import { GameHistoryItem, GameHistoryList, EnhancedGameState, ActiveGameState } from '../types/game';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   MAX_DIFFICULTY: 'trickydex_max_difficulty',
   SELECTED_CATEGORIES: 'trickydex_selected_categories',
   GAME_HISTORY: 'trickydex_game_history', // New key for game history
+  ACTIVE_GAME: 'trickydex_active_game', // New key for active game state
 };
 
 // Maximum number of game history items to store
@@ -129,6 +130,7 @@ export const clearStoredData = async (): Promise<void> => {
       STORAGE_KEYS.MAX_DIFFICULTY,
       STORAGE_KEYS.SELECTED_CATEGORIES,
       STORAGE_KEYS.GAME_HISTORY, // Add game history to the clear operation
+      STORAGE_KEYS.ACTIVE_GAME, // Add active game to the clear operation
     ]);
   } catch (error) {
     console.error('Failed to clear stored data:', error);
@@ -195,5 +197,42 @@ export const clearGameHistory = async (): Promise<void> => {
     await AsyncStorage.removeItem(STORAGE_KEYS.GAME_HISTORY);
   } catch (error) {
     console.error('Failed to clear game history:', error);
+  }
+};
+
+// === ACTIVE GAME STATE FUNCTIONS ===
+
+// Save active game state
+export const saveActiveGame = async (gameState: EnhancedGameState): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.ACTIVE_GAME,
+      JSON.stringify({
+        gameState,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  } catch (error) {
+    console.error('Failed to save active game state:', error);
+  }
+};
+
+// Load active game state
+export const loadActiveGame = async (): Promise<ActiveGameState | null> => {
+  try {
+    const savedGame = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_GAME);
+    return savedGame ? JSON.parse(savedGame) : null;
+  } catch (error) {
+    console.error('Failed to load active game state:', error);
+    return null;
+  }
+};
+
+// Clear active game state (when game is finished or abandoned)
+export const clearActiveGame = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_GAME);
+  } catch (error) {
+    console.error('Failed to clear active game state:', error);
   }
 };
