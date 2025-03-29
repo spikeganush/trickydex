@@ -99,7 +99,7 @@ export const loadGameSettings = async (): Promise<{
 export const loadMaxDifficulty = async (): Promise<number> => {
   try {
     const savedMaxDifficulty = await AsyncStorage.getItem(STORAGE_KEYS.MAX_DIFFICULTY);
-    return savedMaxDifficulty ? parseInt(savedMaxDifficulty, 10) : 30; // Default to 30 per expanded difficulty system
+    return savedMaxDifficulty ? parseInt(savedMaxDifficulty, 10) : 3; // Default to 3 per expanded difficulty system
   } catch (error) {
     console.error('Failed to load max difficulty:', error);
     return 30; // Default to 30 per expanded difficulty system

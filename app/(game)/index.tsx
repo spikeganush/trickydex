@@ -6,8 +6,11 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  LayoutChangeEvent,
+  PanResponder,
+  GestureResponderEvent,
 } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +26,7 @@ import {
 export default function GameScreen() {
   const [players, setPlayers] = useState<string[]>(['']); // Start with 1 empty player field
   const [touchedFields, setTouchedFields] = useState<boolean[]>([false]); // Track which fields have been touched
-  const [maxDifficulty, setMaxDifficulty] = useState<number>(3); // Default max difficulty (1-10)
+  const [maxDifficulty, setMaxDifficulty] = useState<number>(3); // Default max difficulty (1-30)
   const [selectedCategories, setSelectedCategories] = useState<TrickCategory[]>(
     [
       'soul_grinds',
@@ -33,7 +36,32 @@ export default function GameScreen() {
     ]
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [sliderWidth, setSliderWidth] = useState<number>(200); // Default width
   const router = useRouter();
+
+  // Create custom slider with PanResponder
+  const sliderRef = useRef(null);
+  const initialTouchX = useRef(0);
+  const initialValue = useRef(0);
+  
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt: GestureResponderEvent) => {
+      // Store initial touch position and current value
+      initialTouchX.current = evt.nativeEvent.pageX;
+      initialValue.current = maxDifficulty;
+    },
+    onPanResponderMove: (evt: GestureResponderEvent) => {
+      if (sliderWidth > 0) {
+        // Calculate movement based on difference from initial touch
+        const touchOffset = evt.nativeEvent.pageX - initialTouchX.current;
+        const valueChange = Math.round((touchOffset / sliderWidth) * 30);
+        const newValue = Math.max(1, Math.min(30, initialValue.current + valueChange));
+        setMaxDifficulty(newValue);
+      }
+    },
+  });
 
   // Load saved player names and game settings on component mount
   useEffect(() => {
@@ -246,21 +274,34 @@ export default function GameScreen() {
           <View style={styles.sliderContainer}>
             <Pressable
               style={styles.sliderButton}
-              onPress={() => setMaxDifficulty(Math.max(1, maxDifficulty - 3))}
+              onPress={() => setMaxDifficulty(Math.max(1, maxDifficulty - 1))}
             >
               <Ionicons name="remove" size={24} color="#FFFFFF" />
             </Pressable>
-            <View style={styles.slider}>
-              <View
-                style={[
-                  styles.sliderTrack,
-                  { width: `${(maxDifficulty / 30) * 100}%` },
-                ]}
-              />
+            <View 
+              style={styles.sliderTrackContainer}
+              onLayout={(event: LayoutChangeEvent) => {
+                setSliderWidth(event.nativeEvent.layout.width);
+              }}
+              ref={sliderRef}
+              {...panResponder.panHandlers}
+            >
+              <View style={styles.slider}>
+                <View
+                  style={[
+                    styles.sliderTrack,
+                    { width: `${(maxDifficulty / 30) * 100}%` },
+                  ]}
+                />
+                <View style={[
+                  styles.sliderThumb,
+                  { left: `${(maxDifficulty / 30) * 100}%`, marginLeft: -12 }
+                ]} />
+              </View>
             </View>
             <Pressable
               style={styles.sliderButton}
-              onPress={() => setMaxDifficulty(Math.min(30, maxDifficulty + 3))}
+              onPress={() => setMaxDifficulty(Math.min(30, maxDifficulty + 1))}
             >
               <Ionicons name="add" size={24} color="#FFFFFF" />
             </Pressable>
@@ -414,17 +455,29 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
   },
-  slider: {
+  sliderTrackContainer: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
+    paddingVertical: 15, // Increase touch target area
+    marginHorizontal: 12,
+  },
+  slider: {
+    height: 10,
+    borderRadius: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginHorizontal: 8,
+    position: 'relative',
   },
   sliderTrack: {
-    height: 4,
-    borderRadius: 2,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#4CAF50',
+  },
+  sliderThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#4CAF50',
+    position: 'absolute',
+    top: -7,
   },
   historyButton: {
     flexDirection: 'row',
