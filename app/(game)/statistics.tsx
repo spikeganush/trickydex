@@ -26,16 +26,28 @@ export default function StatisticsScreen() {
   const router = useRouter();
   const [history, setHistory] = useState<GameHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Load game history
   useEffect(() => {
     const fetchHistory = async () => {
       try {
         setLoading(true);
+        setError(null);
         const historyData = await loadGameHistory();
-        setHistory(historyData);
+        
+        // Add a safety check for historyData
+        if (!historyData || !Array.isArray(historyData)) {
+          console.error('Invalid history data format:', historyData);
+          setError('Invalid history data format');
+          setHistory([]);
+        } else {
+          setHistory(historyData);
+        }
       } catch (error) {
         console.error('Failed to load game history:', error);
+        setError('Failed to load game history. Please try again later.');
+        setHistory([]);
       } finally {
         setLoading(false);
       }
@@ -43,7 +55,6 @@ export default function StatisticsScreen() {
 
     fetchHistory();
   }, []);
-
   // Calculate statistics
   const totalGames = useMemo(() => history.length, [history]);
   
@@ -197,34 +208,52 @@ export default function StatisticsScreen() {
   ) => {
     if (loading) return <ActivityIndicator size="small" color="#D13B40" />;
     
-    return (
-      <BarChart
-        data={chartData}
-        width={screenWidth - 32} // Account for card padding
-        height={220}
-        chartConfig={{
-          ...chartConfig,
-          color,
-          propsForLabels: {
-            fontSize: 10,
-            fill: '#FFFFFF'
-          },
-          propsForVerticalLabels: {
-            fontSize: 10,
-            fill: '#FFFFFF'
-          },
-          propsForHorizontalLabels: {
-            fontSize: 10,
-            fill: '#FFFFFF'
-          }
-        }}
-        style={styles.chart}
-        showValuesOnTopOfBars
-        fromZero
-        yAxisLabel=""
-        yAxisSuffix=""
-      />
-    );
+    // Add additional safety checks
+    if (!chartData || !chartData.labels || !chartData.datasets || chartData.labels.length === 0) {
+      return (
+        <View style={styles.chartErrorContainer}>
+          <Text style={styles.noDataText}>Chart data unavailable</Text>
+        </View>
+      );
+    }
+    
+    try {
+      return (
+        <BarChart
+          data={chartData}
+          width={screenWidth - 32} // Account for card padding
+          height={220}
+          chartConfig={{
+            ...chartConfig,
+            color,
+            propsForLabels: {
+              fontSize: 10,
+              fill: '#FFFFFF'
+            },
+            propsForVerticalLabels: {
+              fontSize: 10,
+              fill: '#FFFFFF'
+            },
+            propsForHorizontalLabels: {
+              fontSize: 10,
+              fill: '#FFFFFF'
+            }
+          }}
+          style={styles.chart}
+          showValuesOnTopOfBars
+          fromZero
+          yAxisLabel=""
+          yAxisSuffix=""
+        />
+      );
+    } catch (err) {
+      console.error('Error rendering chart:', err);
+      return (
+        <View style={styles.chartErrorContainer}>
+          <Text style={styles.noDataText}>Error rendering chart</Text>
+        </View>
+      );
+    }
   };
 
   return (
@@ -249,6 +278,17 @@ export default function StatisticsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D13B40" />
           <Text style={styles.loadingText}>Loading statistics...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={64} color="#D13B40" />
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable 
+            style={styles.retryButton}
+            onPress={() => router.replace('/statistics')}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
         </View>
       ) : history.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -494,5 +534,35 @@ const styles = StyleSheet.create({
   chart: {
     marginVertical: 8,
     borderRadius: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#D13B40',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  chartErrorContainer: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
   },
 });
