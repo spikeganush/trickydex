@@ -89,7 +89,6 @@ export default function GameScreen() {
           // This ensures the UI shows the same categories that were used in the saved game
           if (activeGame.gameState.selectedCategories && 
               activeGame.gameState.selectedCategories.length > 0) {
-            console.log('Restoring categories from saved game:', activeGame.gameState.selectedCategories);
             setSelectedCategories(activeGame.gameState.selectedCategories as TrickCategory[]);
           }
           
@@ -112,7 +111,6 @@ export default function GameScreen() {
         // Load selected categories
         const savedCategories = await loadSelectedCategories() as TrickCategory[];
         if (savedCategories && savedCategories.length > 0) {
-          console.log('Restoring categories from settings:', savedCategories);
           setSelectedCategories(savedCategories);
         }
       } catch (error) {
@@ -227,7 +225,6 @@ export default function GameScreen() {
         
         // Save the updated game state before resuming
         await saveActiveGame(updatedGameState);
-        console.log('Updated saved game with current categories:', selectedCategories);
         
         // Navigate to the game screen with resume flag and necessary configuration
         router.push({

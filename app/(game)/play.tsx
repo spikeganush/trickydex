@@ -130,8 +130,6 @@ export default function GamePlayScreen() {
         
         // If we have a saved game and should resume it
         if (savedGame && shouldResumeGame) {
-          console.log('Resuming saved game from:', savedGame.timestamp);
-          
           // Create a merged game state that respects category changes from the URL
           const mergedGameState = {
             ...savedGame.gameState,
@@ -144,15 +142,9 @@ export default function GamePlayScreen() {
           
           // Re-save the game state with the updated categories to persist changes
           if (urlCategories) {
-            console.log('Updating saved game with new categories:', urlCategories);
             await saveActiveGame(mergedGameState);
           }
           
-          console.log('Game state restored with config:', {
-            difficulty: mergedGameState.difficultyPreference,
-            maxDifficulty: mergedGameState.maxDifficulty,
-            categories: mergedGameState.selectedCategories
-          });
           return; // Exit early as we've loaded the saved game
         }
         
@@ -600,10 +592,7 @@ export default function GamePlayScreen() {
       
       // Make sure we're saving the most up-to-date categories
       // This is crucial for preserving category changes
-      console.log('Saving game with categories:', gameState.selectedCategories);
-      
       await saveActiveGame(gameState);
-      console.log('Game state saved successfully');
     } catch (error) {
       console.error('Error saving game state:', error);
     }
