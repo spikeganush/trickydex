@@ -26,7 +26,8 @@ TrickyDexAi/
 │   ├── (game)/               # BLADE game related screens
 │   │   ├── index.tsx         # Game setup screen
 │   │   ├── play.tsx          # Game play screen
-│   │   └── game-over.tsx     # Game over screen
+│   │   ├── game-over.tsx     # Game over screen
+│   │   └── statistics.tsx    # Game statistics screen
 │   ├── _layout.tsx           # Root layout component
 │   └── index.tsx             # Home screen
 ├── assets/                   # Static assets (images, fonts, etc.)
@@ -179,6 +180,21 @@ Displays the final results of the game:
 - Player rankings
 - Game statistics
 - Option to play again
+
+#### Statistics (`app/(game)/statistics.tsx`)
+
+Provides comprehensive game analytics:
+- Overview with total games played and latest game date
+- Player rankings based on performance metrics:
+  - Win rates across all games
+  - Trick success rates
+  - Total games played
+- Visual data representations through charts:
+  - Difficulty distribution chart showing usage of different difficulty levels
+  - Game mode distribution chart showing preference for easy/medium/hard modes
+- Responsive design with loading states and empty state messaging
+- Utilizes react-native-chart-kit for data visualization
+- Reads data directly from the persistent game history
 
 ## Difficulty System
 
