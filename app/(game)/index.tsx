@@ -307,11 +307,18 @@ export default function GameScreen() {
             </Pressable>
           </View>
           <Pressable 
-            style={styles.historyButton}
+            style={[styles.historyButton, { marginBottom: 8 }]}
             onPress={() => router.push('/(game)/history')}
           >
             <Ionicons name="time-outline" size={20} color="#FFFFFF" />
             <Text style={styles.buttonText}>Game History</Text>
+          </Pressable>
+          <Pressable 
+            style={styles.historyButton}
+            onPress={() => router.push('/(game)/statistics')}
+          >
+            <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
+            <Text style={styles.buttonText}>Statistics</Text>
           </Pressable>
         </View>
 
