@@ -131,20 +131,26 @@ export default function StatisticsScreen() {
     ];
 
     history.forEach(game => {
-      const difficulty = game.settings.maxDifficulty;
-      if (difficulty <= 5) ranges[0].count += 1;
-      else if (difficulty <= 10) ranges[1].count += 1;
-      else if (difficulty <= 15) ranges[2].count += 1;
-      else if (difficulty <= 20) ranges[3].count += 1;
-      else if (difficulty <= 25) ranges[4].count += 1;
-      else ranges[5].count += 1;
+      const difficulty = game?.settings?.maxDifficulty; // Optional chaining
+      // Ensure difficulty is a valid number before categorizing
+      if (typeof difficulty === 'number' && !isNaN(difficulty)) {
+        if (difficulty <= 5) ranges[0].count += 1;
+        else if (difficulty <= 10) ranges[1].count += 1;
+        else if (difficulty <= 15) ranges[2].count += 1;
+        else if (difficulty <= 20) ranges[3].count += 1;
+        else if (difficulty <= 25) ranges[4].count += 1;
+        else ranges[5].count += 1;
+      } else {
+        console.warn('Invalid difficulty found in game history:', game.id, difficulty);
+      }
     });
 
     return {
       labels: ranges.map(r => r.label),
       datasets: [
         {
-          data: ranges.map(r => r.count)
+          // Ensure data contains only valid numbers
+          data: ranges.map(r => (typeof r.count === 'number' ? r.count : 0))
         }
       ]
     };
@@ -161,9 +167,12 @@ export default function StatisticsScreen() {
     };
 
     history.forEach(game => {
-      const preference = game.settings.difficultyPreference;
-      if (modes[preference] !== undefined) {
-        modes[preference] += 1;
+      const preference = game?.settings?.difficultyPreference; // Optional chaining
+      // Check if the preference is a valid key
+      if (preference && modes.hasOwnProperty(preference)) {
+        modes[preference as keyof typeof modes] += 1;
+      } else {
+        console.warn('Invalid difficulty preference found in game history:', game.id, preference);
       }
     });
 
@@ -175,7 +184,8 @@ export default function StatisticsScreen() {
       labels,
       datasets: [
         {
-          data: Object.values(modes)
+          // Ensure data contains only valid numbers
+          data: Object.values(modes).map(val => (typeof val === 'number' ? val : 0))
         }
       ]
     };
@@ -308,13 +318,21 @@ export default function StatisticsScreen() {
               
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
-                  {history[0]?.date ? 
-                    new Date(history[0].date).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    }) 
-                    : 'N/A'}
+                  {(() => {
+                    // Add try-catch for robust date formatting
+                    try {
+                      return history[0]?.date ? 
+                        new Date(history[0].date).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }) 
+                        : 'N/A';
+                    } catch (dateError) {
+                      console.error('Error formatting date:', history[0]?.date, dateError);
+                      return 'Invalid Date'; // Display fallback on error
+                    }
+                  })()}
                 </Text>
                 <Text style={styles.statLabel}>Latest Game</Text>
               </View>
