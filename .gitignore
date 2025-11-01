@@ -43,3 +43,5 @@ android/
 # iOS folder
 ios/
 
+
+.claude/
