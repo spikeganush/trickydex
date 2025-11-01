@@ -362,3 +362,4 @@ jobs:
           releaseFiles: artifacts/app-release.aab
           track: ${{ env.TRACK }}
           status: completed
+          changesNotSentForReview: true
