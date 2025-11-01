@@ -7,31 +7,31 @@ on:
       - staging
       - main
     tags:
-      - 'v*'
-  workflow_dispatch:  # Allow manual triggering
+      - "v*"
+  workflow_dispatch: # Allow manual triggering
     inputs:
       skip_build:
-        description: 'Skip build and use the latest artifact (only use if you have previously successful builds)'
+        description: "Skip build and use the latest artifact (only use if you have previously successful builds)"
         type: boolean
         default: false
       track:
-        description: 'Google Play track (internal, closed, production)'
+        description: "Google Play track (internal, closed, production)"
         type: choice
         options:
           - auto
           - internal
           - closed
           - production
-        default: 'auto'
+        default: "auto"
       version_increment:
-        description: 'Version increment type'
+        description: "Version increment type"
         type: choice
         options:
           - patch
           - minor
           - major
           - none
-        default: 'patch'
+        default: "patch"
 
 jobs:
   build:
@@ -46,27 +46,27 @@ jobs:
       artifact_id: ${{ steps.upload-artifact.outputs.artifact-id }}
       version_code: ${{ steps.version.outputs.version_code }}
       version_name: ${{ steps.version.outputs.version_name }}
-      
+
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for proper versioning
-      
+          fetch-depth: 0 # Fetch all history for proper versioning
+
       - name: 🏗 Setup Git identity
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-        
+
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "22"
+          cache: "npm"
+
       - name: 📦 Install dependencies
         run: npm ci
-          
+
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
@@ -74,7 +74,7 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
           packager: npm
-      
+
       - name: 🔍 Set deployment track based on branch
         id: set-track
         run: |
@@ -103,31 +103,31 @@ jobs:
               echo "build_profile=preview" >> $GITHUB_OUTPUT
             fi
           fi
-          
+
           # Also set as environment variables for this job
           echo "TRACK=$(cat $GITHUB_OUTPUT | grep track | cut -d= -f2)" >> $GITHUB_ENV
           echo "BUILD_PROFILE=$(cat $GITHUB_OUTPUT | grep build_profile | cut -d= -f2)" >> $GITHUB_ENV
-          
+
           echo "Using track: ${{ env.TRACK }}"
           echo "Using build profile: ${{ env.BUILD_PROFILE }}"
-          
+
           # Set the current branch name for later use
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-      
+
       - name: 🔢 Update version code and name
         id: version
         run: |
           # Extract current version info from app.json
           CURRENT_VERSION=$(jq -r '.expo.version' app.json)
           CURRENT_VERSION_CODE=$(jq -r '.expo.android.versionCode' app.json)
-          
+
           echo "Current version: $CURRENT_VERSION"
           echo "Current version code: $CURRENT_VERSION_CODE"
-          
+
           # Determine version increment type
           INCREMENT_TYPE="${{ github.event.inputs.version_increment }}"
-          
+
           # If increment type is not specified via input, determine from commit message or branch
           if [[ "$INCREMENT_TYPE" == "" || "$INCREMENT_TYPE" == "none" ]]; then
             COMMIT_MSG=$(git log -1 --pretty=%B)
@@ -148,15 +148,15 @@ jobs:
               fi
             fi
           fi
-          
+
           echo "Using increment type: $INCREMENT_TYPE"
-          
+
           # Split version into components
           IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
           MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
-          
+
           # Increment version based on type
           if [[ "$INCREMENT_TYPE" == "major" ]]; then
             MAJOR=$((MAJOR + 1))
@@ -169,28 +169,28 @@ jobs:
             # Default to patch increment
             PATCH=$((PATCH + 1))
           fi
-          
+
           # Create new version string
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          
+
           # Increment version code
           NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-          
+
           echo "New version: $NEW_VERSION"
           echo "New version code: $NEW_VERSION_CODE"
-          
+
           # Update app.json with new versions
           jq ".expo.version = \"$NEW_VERSION\" | .expo.android.versionCode = $NEW_VERSION_CODE" app.json > app.json.tmp
           mv app.json.tmp app.json
-          
+
           # Show the updated app.json
           echo "Updated app.json:"
           cat app.json | grep -E 'version|versionCode'
-          
+
           # Save the versions for later steps
           echo "version_name=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
-      
+
       - name: 📝 Update version in files
         run: |
           # Check if there are changes to commit
@@ -205,35 +205,35 @@ jobs:
           else
             echo "No changes to commit"
           fi
-      
+
       - name: 📝 Commit and push version changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: bump version to ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }}) [skip ci]"
           file_pattern: "app.json README.md"
-      
+
       - name: 🚀 Build Android App Bundle Locally
         run: |
           echo "Building Android app with profile ${{ env.BUILD_PROFILE }}..."
           echo "Using version: ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }})"
-          
+
           # Create artifacts directory
           mkdir -p artifacts
-          
+
           # Clean prebuild to ensure a fresh build
           npx expo prebuild --clean
-          
+
           # Build locally instead of using Expo's build service
           eas build -p android --local --profile ${{ env.BUILD_PROFILE }} --output artifacts/app-release.aab --non-interactive
-          
+
           if [ ! -f "artifacts/app-release.aab" ]; then
             echo "Failed to build app bundle"
             exit 1
           fi
-          
+
           echo "Successfully built app-release.aab"
           ls -la artifacts/app-release.aab
-      
+
       - name: 📤 Upload build artifact
         id: upload-artifact
         uses: actions/upload-artifact@v4
@@ -241,8 +241,8 @@ jobs:
           name: android-app-bundle
           path: artifacts/app-release.aab
           retention-days: 5
-          compression-level: 0  # No compression for binary files
-  
+          compression-level: 0 # No compression for binary files
+
   deploy:
     name: 🚀 Deploy to Google Play
     needs: build
@@ -252,26 +252,26 @@ jobs:
       always() && 
       (github.event.inputs.skip_build == 'true' || 
       (needs.build.result == 'success' || needs.build.result == 'skipped'))
-    
+
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for proper versioning
-      
+          fetch-depth: 0 # Fetch all history for proper versioning
+
       - name: 📋 Check if skipping build
         run: |
           if [[ "${{ github.event.inputs.skip_build }}" == "true" ]]; then
             echo "⚠️ Build step was skipped. Using previously uploaded artifact."
             echo "Make sure you have a successful previous build!"
           fi
-      
+
       - name: 📥 Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: android-app-bundle
           path: artifacts
-      
+
       - name: 📋 Check artifact exists
         run: |
           if [ ! -f "artifacts/app-release.aab" ]; then
@@ -279,10 +279,10 @@ jobs:
             echo "If you skipped the build, ensure you have a previous successful build with an artifact."
             exit 1
           fi
-          
+
           echo "✅ Found app bundle:"
           ls -la artifacts/app-release.aab
-      
+
       - name: 🔍 Set track based on input or build job
         run: |
           if [[ "${{ github.event.inputs.skip_build }}" == "true" && "${{ github.event.inputs.track }}" != "auto" ]]; then
@@ -290,9 +290,9 @@ jobs:
           else
             echo "TRACK=${{ needs.build.outputs.track }}" >> $GITHUB_ENV
           fi
-          
+
           echo "Using track: ${{ env.TRACK }}"
-      
+
       - name: 🔢 Get current version info when skipping build
         if: github.event.inputs.skip_build == 'true'
         id: current_version
@@ -300,26 +300,26 @@ jobs:
           # Extract current version info from app.json
           CURRENT_VERSION=$(jq -r '.expo.version' app.json)
           CURRENT_VERSION_CODE=$(jq -r '.expo.android.versionCode' app.json)
-          
+
           # Increment version code for this deployment
           NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
-          
+
           echo "Current version: $CURRENT_VERSION"
           echo "Current version code: $CURRENT_VERSION_CODE"
           echo "New version code: $NEW_VERSION_CODE"
-          
+
           # Update app.json with new version code
           jq ".expo.android.versionCode = $NEW_VERSION_CODE" app.json > app.json.tmp
           mv app.json.tmp app.json
-          
+
           # Save the versions for later steps
           echo "version_name=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
-          
+
           # Set environment variables
           echo "VERSION_NAME=$CURRENT_VERSION" >> $GITHUB_ENV
           echo "VERSION_CODE=$NEW_VERSION_CODE" >> $GITHUB_ENV
-      
+
       - name: 📝 Update version in files when skipping build
         if: github.event.inputs.skip_build == 'true'
         run: |
@@ -340,20 +340,20 @@ jobs:
           else
             echo "No changes detected, skipping commit"
           fi
-      
+
       - name: 🔢 Set version variables from build job
         if: github.event.inputs.skip_build != 'true'
         run: |
           echo "VERSION_NAME=${{ needs.build.outputs.version_name }}" >> $GITHUB_ENV
           echo "VERSION_CODE=${{ needs.build.outputs.version_code }}" >> $GITHUB_ENV
-          
+
           echo "Using version name: ${{ needs.build.outputs.version_name }}"
           echo "Using version code: ${{ needs.build.outputs.version_code }}"
-      
+
       - name: 🔐 Setup Google Play Service Account
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service-account.json
-          
+
       - name: 🚀 Deploy to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
