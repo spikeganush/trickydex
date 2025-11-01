@@ -213,12 +213,12 @@ export default function GamePlayScreen() {
     };
 
     // Add back button handler for Android
-    BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
     // Create cleanup function
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-      
+      backHandler.remove();
+
       // Don't save if game is over
       if (!isGameOver.current) {
         saveGameBeforeExit();
