@@ -1,25 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   initialTricks,
   trickCategories,
   TrickCategory,
-} from '../../types/trick';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+} from "../../types/trick";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
   withSpring,
   useAnimatedStyle,
-} from 'react-native-reanimated';
-import { useAppContext } from '../../context/AppContext';
+} from "react-native-reanimated";
+import { useAppContext } from "../../context/AppContext";
 
 const TrickDetailScreen = () => {
   const { id } = useLocalSearchParams();
@@ -52,7 +52,7 @@ const TrickDetailScreen = () => {
     };
 
     loadScreen();
-  }, []);
+  }, [cardScale, titleOpacity, detailsOpacity, trick, addToRecentlyViewed]);
 
   const handleFavoriteToggle = async () => {
     if (!trick) return;
@@ -89,20 +89,20 @@ const TrickDetailScreen = () => {
   if (!trick) {
     return (
       <LinearGradient
-        colors={['#2E3338', '#393E44']}
+        colors={["#2E3338", "#393E44"]}
         style={styles.container}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name='arrow-back' size={24} color='#D13B40' />
+            <Ionicons name="arrow-back" size={24} color="#D13B40" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>TrickyDex</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name='alert-circle' size={64} color='#D13B40' />
+          <Ionicons name="alert-circle" size={64} color="#D13B40" />
           <Text style={styles.errorText}>Trick not found</Text>
           <TouchableOpacity style={styles.returnButton} onPress={handleBack}>
             <Text style={styles.returnButtonText}>Return to Catalog</Text>
@@ -114,14 +114,14 @@ const TrickDetailScreen = () => {
 
   return (
     <LinearGradient
-      colors={['#2E3338', '#393E44']}
+      colors={["#2E3338", "#393E44"]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name='arrow-back' size={24} color='#D13B40' />
+          <Ionicons name="arrow-back" size={24} color="#D13B40" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>TrickyDex</Text>
         <TouchableOpacity
@@ -129,9 +129,9 @@ const TrickDetailScreen = () => {
           style={styles.favoriteButton}
         >
           <Ionicons
-            name={isFavorite(trick.id) ? 'star' : 'star-outline'}
+            name={isFavorite(trick.id) ? "star" : "star-outline"}
             size={24}
-            color='#D13B40'
+            color="#D13B40"
           />
         </TouchableOpacity>
       </View>
@@ -140,7 +140,7 @@ const TrickDetailScreen = () => {
         <Animated.View style={[styles.card, animatedCardStyle]}>
           <Animated.View style={[styles.titleSection, animatedTitleStyle]}>
             <Text style={styles.trickNumber}>
-              #{trick.id.toString().padStart(3, '0')}
+              #{trick.id.toString().padStart(3, "0")}
             </Text>
             <Text style={styles.trickName}>{trick.name}</Text>
             <View style={styles.categoryBadge}>
@@ -187,9 +187,9 @@ const TrickDetailScreen = () => {
                     variation && (
                       <View key={index} style={styles.variationItem}>
                         <Ionicons
-                          name='chevron-forward'
+                          name="chevron-forward"
                           size={16}
-                          color='#D13B40'
+                          color="#D13B40"
                         />
                         <Text style={styles.variationText}>
                           {variation.name}
@@ -211,18 +211,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(209, 59, 64, 0.3)',
+    borderBottomColor: "rgba(209, 59, 64, 0.3)",
   },
   headerTitle: {
-    color: '#D13B40',
+    color: "#D13B40",
     fontSize: 20,
-    fontFamily: 'Roboto_700Bold',
+    fontFamily: "Roboto_700Bold",
   },
   backButton: {
     padding: 8,
@@ -238,42 +238,42 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 2,
-    borderColor: '#D13B40',
+    borderColor: "#D13B40",
   },
   titleSection: {
     padding: 16,
-    backgroundColor: 'rgba(57, 62, 68, 0.7)',
+    backgroundColor: "rgba(57, 62, 68, 0.7)",
     borderBottomWidth: 2,
-    borderBottomColor: '#D13B40',
+    borderBottomColor: "#D13B40",
   },
   trickNumber: {
-    color: '#D13B40',
+    color: "#D13B40",
     fontSize: 14,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
     marginBottom: 4,
   },
   trickName: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 28,
-    fontFamily: 'Roboto_700Bold',
+    fontFamily: "Roboto_700Bold",
     marginBottom: 8,
   },
   categoryBadge: {
-    backgroundColor: 'rgba(209, 59, 64, 0.8)',
+    backgroundColor: "rgba(209, 59, 64, 0.8)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   categoryText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: 'Roboto_500Medium',
-    textTransform: 'capitalize',
+    fontFamily: "Roboto_500Medium",
+    textTransform: "capitalize",
   },
   detailsSection: {
     padding: 16,
@@ -282,97 +282,97 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   difficultyLabel: {
-    color: '#D13B40',
+    color: "#D13B40",
     fontSize: 16,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     marginBottom: 8,
   },
   difficultyBar: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 4,
   },
   difficultyUnit: {
     flex: 1,
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    height: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     marginHorizontal: 1,
   },
   activeDifficultyUnit: {
-    backgroundColor: '#D13B40',
+    backgroundColor: "#D13B40",
   },
   hardDifficultyUnit: {
-    backgroundColor: '#FF4500',
+    backgroundColor: "#FF4500",
   },
   easyDifficultyUnit: {
-    backgroundColor: '#32CD32',
+    backgroundColor: "#32CD32",
   },
   difficultyValue: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    textAlign: 'right',
+    textAlign: "right",
   },
   descriptionContainer: {
     marginBottom: 20,
   },
   descriptionTitle: {
-    color: '#D13B40',
+    color: "#D13B40",
     fontSize: 16,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     marginBottom: 8,
   },
   description: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
   },
   variationsContainer: {
     marginBottom: 16,
   },
   variationsTitle: {
-    color: '#D13B40',
+    color: "#D13B40",
     fontSize: 16,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
     marginBottom: 8,
   },
   variationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 6,
   },
   variationText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: 'Roboto_400Regular',
+    fontFamily: "Roboto_400Regular",
     marginLeft: 4,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
   },
   errorText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
     marginVertical: 16,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
   },
   returnButton: {
-    backgroundColor: '#D13B40',
+    backgroundColor: "#D13B40",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     marginTop: 16,
   },
   returnButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: 'Roboto_500Medium',
+    fontFamily: "Roboto_500Medium",
   },
 });
 

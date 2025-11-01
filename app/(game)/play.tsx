@@ -6,33 +6,32 @@ import {
   ScrollView,
   Alert,
   BackHandler,
-} from 'react-native';
+} from "react-native";
 import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
   useAnimatedStyle,
-} from 'react-native-reanimated';
-import { useState, useEffect, useRef } from 'react';
+} from "react-native-reanimated";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   initialTricks,
   getTrickById,
   TrickCategory,
   getCompleteRandomTrick,
-  Variation,
-  Entrance,
-} from '../../types/trick';
-import { GameState, Player, EnhancedGameState } from '../../types/game';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { saveGameSettings, loadGameSettings, saveActiveGame, loadActiveGame, clearActiveGame } from '../../utils/storage';
-import { useFocusEffect } from '@react-navigation/native';
-
-// Enhanced game state to include variation and entrance
-interface EnhancedGameStateWithSave extends EnhancedGameState {
-  // Any additional properties for the game play screen not in the interface
-}
+} from "../../types/trick";
+import { EnhancedGameState } from "../../types/game";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  saveGameSettings,
+  loadGameSettings,
+  saveActiveGame,
+  loadActiveGame,
+  clearActiveGame,
+} from "../../utils/storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function GamePlayScreen() {
   const router = useRouter();
@@ -53,21 +52,25 @@ export default function GamePlayScreen() {
   const isGameOver = useRef(false);
 
   // Parse selected categories or use all categories as default
-  const selectedCategories: TrickCategory[] = categoriesParam
-    ? JSON.parse(categoriesParam)
-    : [
-        'soul_grinds',
-        'groove_grinds',
-        'special_grinds',
-        'air_tricks',
-        'spins',
-        'flips',
-      ];
+  const selectedCategories: TrickCategory[] = useMemo(
+    () =>
+      categoriesParam
+        ? JSON.parse(categoriesParam)
+        : [
+            "soul_grinds",
+            "groove_grinds",
+            "special_grinds",
+            "air_tricks",
+            "spins",
+            "flips",
+          ],
+    [categoriesParam]
+  );
 
   // Animation for trick reveal
   useEffect(() => {
     trickScale.value = withSpring(1, { damping: 10, stiffness: 100 });
-  }, []);
+  }, [trickScale]);
 
   const animateLetter = () => {
     letterScale.value = withSpring(1.5, { damping: 10, stiffness: 100 }, () => {
@@ -78,10 +81,12 @@ export default function GamePlayScreen() {
     });
   };
 
-  const [gameState, setGameState] = useState<EnhancedGameStateWithSave>(() => {
+  const [gameState, setGameState] = useState<EnhancedGameState>(() => {
     // Parse maxDifficulty from URL parameter first so it's consistent
-    const parsedMaxDifficulty = maxDifficultyParam ? parseInt(maxDifficultyParam, 10) : 7;
-    const initialDifficultyPreference: 'easy' | 'medium' | 'hard' = 'easy';
+    const parsedMaxDifficulty = maxDifficultyParam
+      ? parseInt(maxDifficultyParam, 10)
+      : 7;
+    const initialDifficultyPreference: "easy" | "medium" | "hard" = "easy";
 
     // Load saved game settings - this will be initialized from AsyncStorage in the useEffect below
     // Here we just use default values for initialization
@@ -95,7 +100,13 @@ export default function GamePlayScreen() {
 
     // Get a random trick for the first round from the selected categories
     const { trick, variation, entrance, totalDifficulty } =
-      getCompleteRandomTrick(selectedCategories, initialDifficultyPreference, true, true, parsedMaxDifficulty);
+      getCompleteRandomTrick(
+        selectedCategories,
+        initialDifficultyPreference,
+        true,
+        true,
+        parsedMaxDifficulty
+      );
 
     return {
       players: initialPlayers,
@@ -119,53 +130,58 @@ export default function GamePlayScreen() {
     const fetchGameData = async () => {
       try {
         // Check if we should resume a saved game (explicitly from URL)
-        const shouldResumeGame = resumeGameParam === 'true';
-        
+        const shouldResumeGame = resumeGameParam === "true";
+
         // Get categories from URL if present (this would be updated categories from setup screen)
-        const urlCategories = categoriesParam 
-          ? JSON.parse(categoriesParam) as TrickCategory[]
+        const urlCategories = categoriesParam
+          ? (JSON.parse(categoriesParam) as TrickCategory[])
           : null;
-        
+
         const savedGame = await loadActiveGame();
-        
+
         // If we have a saved game and should resume it
         if (savedGame && shouldResumeGame) {
           // Create a merged game state that respects category changes from the URL
           const mergedGameState = {
             ...savedGame.gameState,
             // Use URL categories if they exist, otherwise use saved categories
-            selectedCategories: urlCategories || savedGame.gameState.selectedCategories
+            selectedCategories:
+              urlCategories || savedGame.gameState.selectedCategories,
           };
-          
+
           // Important: Replace the game state with the merged one
           setGameState(mergedGameState);
-          
+
           // Re-save the game state with the updated categories to persist changes
           if (urlCategories) {
             await saveActiveGame(mergedGameState);
           }
-          
+
           return; // Exit early as we've loaded the saved game
         }
-        
+
         // If not resuming, load regular game settings
         const settings = await loadGameSettings();
-        
+
         // Only update if we got settings and they're different from current state
         if (settings) {
-          setGameState(prevState => ({
+          setGameState((prevState) => ({
             ...prevState,
             maxDifficulty: settings.maxDifficulty ?? prevState.maxDifficulty,
-            difficultyPreference: settings.difficultyPreference ?? prevState.difficultyPreference,
+            difficultyPreference:
+              settings.difficultyPreference ?? prevState.difficultyPreference,
             // Store selected categories from URL or settings
-            selectedCategories: urlCategories || settings.selectedCategories || prevState.selectedCategories,
+            selectedCategories:
+              urlCategories ||
+              settings.selectedCategories ||
+              prevState.selectedCategories,
           }));
         }
       } catch (error) {
-        console.error('Error loading game data:', error);
+        console.error("Error loading game data:", error);
       }
     };
-    
+
     fetchGameData();
   }, [resumeGameParam, categoriesParam]);
 
@@ -174,17 +190,21 @@ export default function GamePlayScreen() {
     const saveSettings = async () => {
       try {
         await saveGameSettings(
-          gameState.maxDifficulty, 
-          selectedCategories as string[], 
+          gameState.maxDifficulty,
+          selectedCategories as string[],
           gameState.difficultyPreference
         );
       } catch (error) {
-        console.error('Error saving game settings:', error);
+        console.error("Error saving game settings:", error);
       }
     };
-    
+
     saveSettings();
-  }, [gameState.maxDifficulty, gameState.difficultyPreference, selectedCategories]);
+  }, [
+    gameState.maxDifficulty,
+    gameState.difficultyPreference,
+    selectedCategories,
+  ]);
 
   // Save game state when navigating away
   useFocusEffect(() => {
@@ -193,18 +213,18 @@ export default function GamePlayScreen() {
       if (!isGameOver.current) {
         // Save game state before navigating away
         saveGameBeforeExit();
-        
+
         // Show confirmation dialog
         Alert.alert(
           "Leaving Game",
           "Your game progress has been saved. You can resume this game later.",
           [
             { text: "Resume", style: "cancel" },
-            { 
-              text: "Exit", 
+            {
+              text: "Exit",
               onPress: () => router.back(),
-              style: "destructive" 
-            }
+              style: "destructive",
+            },
           ]
         );
         return true; // Prevent default behavior
@@ -213,7 +233,10 @@ export default function GamePlayScreen() {
     };
 
     // Add back button handler for Android
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
 
     // Create cleanup function
     return () => {
@@ -249,7 +272,7 @@ export default function GamePlayScreen() {
   // Function to adjust difficulty based on player performance
   const adjustDifficultyBasedOnPerformance = (
     success: boolean
-  ): 'easy' | 'medium' | 'hard' => {
+  ): "easy" | "medium" | "hard" => {
     const { difficultyPreference } = gameState;
 
     // If player succeeded, potentially increase difficulty
@@ -263,8 +286,8 @@ export default function GamePlayScreen() {
 
       // If player has succeeded in most recent attempts, increase difficulty
       if (successCount >= 2) {
-        if (difficultyPreference === 'easy') return 'medium';
-        if (difficultyPreference === 'medium') return 'hard';
+        if (difficultyPreference === "easy") return "medium";
+        if (difficultyPreference === "medium") return "hard";
       }
     }
     // If player failed, potentially decrease difficulty
@@ -278,8 +301,8 @@ export default function GamePlayScreen() {
 
       // If player has failed in most recent attempts, decrease difficulty
       if (failCount >= 2) {
-        if (difficultyPreference === 'hard') return 'medium';
-        if (difficultyPreference === 'medium') return 'easy';
+        if (difficultyPreference === "hard") return "medium";
+        if (difficultyPreference === "medium") return "easy";
       }
     }
 
@@ -287,7 +310,7 @@ export default function GamePlayScreen() {
     return difficultyPreference;
   };
 
-  const getNewTrick = (difficultyPreference: 'easy' | 'medium' | 'hard') => {
+  const getNewTrick = (difficultyPreference: "easy" | "medium" | "hard") => {
     // Get tricks that haven't been used and are from selected categories
     const unusedTricks = initialTricks.filter(
       (trick) =>
@@ -327,14 +350,14 @@ export default function GamePlayScreen() {
 
     // Select a trick based on difficulty preference
     let selectedTrick;
-    if (difficultyPreference === 'easy') {
+    if (difficultyPreference === "easy") {
       // For easy, select from the easier half of tricks
       const easyTricks = sortedUnusedTricks.slice(
         0,
         Math.ceil(sortedUnusedTricks.length / 2)
       );
       selectedTrick = easyTricks[Math.floor(Math.random() * easyTricks.length)];
-    } else if (difficultyPreference === 'hard') {
+    } else if (difficultyPreference === "hard") {
       // For hard, select from the harder half of tricks
       const hardTricks = sortedUnusedTricks.slice(
         Math.floor(sortedUnusedTricks.length / 2)
@@ -433,7 +456,7 @@ export default function GamePlayScreen() {
     const newDifficultyPreference = adjustDifficultyBasedOnPerformance(success);
 
     if (!success) {
-      const nextLetter = 'BLADE'[player.letters.length];
+      const nextLetter = "BLADE"[player.letters.length];
       player.letters.push(nextLetter);
     }
 
@@ -442,20 +465,20 @@ export default function GamePlayScreen() {
       // Check if player is eliminated
       if (player.letters.length === 5) {
         router.replace({
-          pathname: '/(game)/game-over',
+          pathname: "/(game)/game-over",
           params: {
             playersData: JSON.stringify(updatedPlayers),
             trickHistory: JSON.stringify(updatedTrickHistory),
             gameSettings: JSON.stringify({
               maxDifficulty: gameState.maxDifficulty,
               selectedCategories,
-              difficultyPreference: newDifficultyPreference
-            })
+              difficultyPreference: newDifficultyPreference,
+            }),
           },
         });
         return;
       }
-      
+
       // Just get a new trick for the next round
       const newTrickComplete = getNewTrick(newDifficultyPreference);
 
@@ -482,28 +505,31 @@ export default function GamePlayScreen() {
     }
 
     // MULTIPLAYER MODE FROM HERE ON
-    
+
     // Find the next active player
-    let nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    
+    let nextPlayerIndex =
+      (gameState.currentPlayerIndex + 1) % gameState.players.length;
+
     // Skip eliminated players (those who already have BLADE)
-    while (nextPlayerIndex !== gameState.currentPlayerIndex && 
-           updatedPlayers[nextPlayerIndex].letters.length === 5) {
+    while (
+      nextPlayerIndex !== gameState.currentPlayerIndex &&
+      updatedPlayers[nextPlayerIndex].letters.length === 5
+    ) {
       nextPlayerIndex = (nextPlayerIndex + 1) % gameState.players.length;
     }
-    
+
     // Check if we've completed a full round (all active players have attempted the current trick)
     // This is true when either:
     // 1. We've looped back to player 0, or
     // 2. We've looped back to the starting player
-    const isLastPlayerInRound = 
-      nextPlayerIndex === 0 || 
+    const isLastPlayerInRound =
+      nextPlayerIndex === 0 ||
       nextPlayerIndex === gameState.currentPlayerIndex ||
       // If all players after current have been eliminated
       updatedPlayers
         .slice(gameState.currentPlayerIndex + 1)
-        .every(p => p.letters.length === 5);
-    
+        .every((p) => p.letters.length === 5);
+
     // Prepare state for the next update
     let newTrickId = gameState.currentTrickId;
     let newVariation = gameState.currentVariation;
@@ -511,7 +537,7 @@ export default function GamePlayScreen() {
     let newTotalDifficulty = gameState.totalDifficulty;
     let usedTrickIds = [...gameState.usedTrickIds];
     let roundNumber = gameState.roundNumber;
-    
+
     // Check for game over conditions, but ONLY after a full round is complete
     if (isLastPlayerInRound) {
       // Count active players (not eliminated)
@@ -526,20 +552,20 @@ export default function GamePlayScreen() {
         gameState.roundNumber > 1
       ) {
         router.replace({
-          pathname: '/(game)/game-over',
+          pathname: "/(game)/game-over",
           params: {
             playersData: JSON.stringify(updatedPlayers),
             trickHistory: JSON.stringify(updatedTrickHistory),
             gameSettings: JSON.stringify({
               maxDifficulty: gameState.maxDifficulty,
               selectedCategories,
-              difficultyPreference: newDifficultyPreference
-            })
+              difficultyPreference: newDifficultyPreference,
+            }),
           },
         });
         return;
       }
-      
+
       // If we're still playing, select a new trick for the next round
       const newTrickComplete = getNewTrick(newDifficultyPreference);
 
@@ -549,7 +575,7 @@ export default function GamePlayScreen() {
       newTotalDifficulty = newTrickComplete.totalDifficulty;
       usedTrickIds = [...usedTrickIds, newTrickComplete.trick.id];
       roundNumber += 1;
-      
+
       // Reset nextPlayerIndex to the first active player
       for (let i = 0; i < updatedPlayers.length; i++) {
         if (updatedPlayers[i].letters.length < 5) {
@@ -557,12 +583,12 @@ export default function GamePlayScreen() {
           break;
         }
       }
-      
+
       // Animate the new trick
       trickScale.value = 0.9;
       trickScale.value = withSpring(1, { damping: 10, stiffness: 100 });
     }
-    
+
     // Update game state
     setGameState({
       players: updatedPlayers,
@@ -586,34 +612,35 @@ export default function GamePlayScreen() {
     try {
       // Don't save if game is over
       if (isGameOver.current) return;
-      
+
       // Don't save if no players
       if (gameState.players.length === 0) return;
-      
+
       // Make sure we're saving the most up-to-date categories
       // This is crucial for preserving category changes
       await saveActiveGame(gameState);
     } catch (error) {
-      console.error('Error saving game state:', error);
+      console.error("Error saving game state:", error);
     }
   };
 
   // End the game, clear saved state, and navigate to game over screen
-  const endGame = () => {
+  const endGame = useCallback(() => {
     isGameOver.current = true;
-    
+
     // Clear the active game state
-    clearActiveGame()
-      .catch(error => console.error('Error clearing active game:', error));
-    
+    clearActiveGame().catch((error) =>
+      console.error("Error clearing active game:", error)
+    );
+
     // Navigate to game over screen
     router.push({
-      pathname: '/(game)/game-over',
+      pathname: "/(game)/game-over",
       params: {
         players: JSON.stringify(gameState.players),
       },
     });
-  };
+  }, [router, gameState.players]);
 
   // Handling for the game over case - when all players except one have T.R.I.C.K
   useEffect(() => {
@@ -630,33 +657,12 @@ export default function GamePlayScreen() {
     ) {
       endGame();
     }
-    
+
     // If all players have TRICK (everyone lost), end the game
     if (remainingPlayers.length === 0 && gameState.players.length > 0) {
       endGame();
     }
-  }, [gameState.players]);
-
-  // Add a function to abandon the current game explicitly
-  const abandonGame = () => {
-    Alert.alert(
-      "Abandon Game",
-      "Are you sure you want to abandon this game? All progress will be lost.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Abandon", 
-          onPress: () => {
-            isGameOver.current = true;
-            clearActiveGame()
-              .then(() => router.back())
-              .catch(error => console.error('Error clearing active game:', error));
-          },
-          style: "destructive" 
-        }
-      ]
-    );
-  };
+  }, [gameState.players, gameState.roundNumber, endGame]);
 
   if (!currentPlayer || !currentTrick) {
     return (
@@ -666,12 +672,9 @@ export default function GamePlayScreen() {
     );
   }
 
-  // Determine if we're in training mode (single player)
-  const isTrainingMode = gameState.players.length === 1;
-
   // Format the trick name with variation and entrance
   const formattedTrickName = () => {
-    let name = '';
+    let name = "";
 
     // Add entrance if available
     if (gameState.currentEntrance) {
@@ -691,7 +694,7 @@ export default function GamePlayScreen() {
 
   return (
     <LinearGradient
-      colors={['#2E3338', '#393E44']}
+      colors={["#2E3338", "#393E44"]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -729,7 +732,7 @@ export default function GamePlayScreen() {
           <View style={styles.playerCard}>
             <Text style={styles.playerName}>{currentPlayer.name}</Text>
             <Animated.Text style={[styles.letters, animatedLetterStyle]}>
-              {currentPlayer.letters.join('')}
+              {currentPlayer.letters.join("")}
             </Animated.Text>
           </View>
         </View>
@@ -738,7 +741,7 @@ export default function GamePlayScreen() {
           <View style={styles.trickHeader}>
             <Text style={styles.trickName}>{formattedTrickName()}</Text>
             <Text style={styles.trickCategory}>
-              {currentTrick.category.replace('_', ' ')}
+              {currentTrick.category.replace("_", " ")}
             </Text>
           </View>
           <Text style={styles.trickDescription}>
@@ -754,7 +757,7 @@ export default function GamePlayScreen() {
               </Text>
             )}
             <Text style={styles.difficultyText}>
-              Mode:{' '}
+              Mode:{" "}
               {gameState.difficultyPreference.charAt(0).toUpperCase() +
                 gameState.difficultyPreference.slice(1)}
             </Text>
@@ -769,7 +772,7 @@ export default function GamePlayScreen() {
             style={[styles.button, styles.successButton]}
             onPress={() => handleAttempt(true)}
           >
-            <Ionicons name='checkmark' size={24} color='#FFFFFF' />
+            <Ionicons name="checkmark" size={24} color="#FFFFFF" />
             <Text style={styles.buttonText}>Landed</Text>
           </TouchableOpacity>
 
@@ -777,7 +780,7 @@ export default function GamePlayScreen() {
             style={[styles.button, styles.failButton]}
             onPress={() => handleAttempt(false)}
           >
-            <Ionicons name='close' size={24} color='#FFFFFF' />
+            <Ionicons name="close" size={24} color="#FFFFFF" />
             <Text style={styles.buttonText}>Failed</Text>
           </TouchableOpacity>
         </View>
@@ -794,7 +797,7 @@ export default function GamePlayScreen() {
             >
               <Text style={styles.statusName}>{player.name}</Text>
               <Text style={styles.statusLetters}>
-                {player.letters.length > 0 ? player.letters.join('') : 'Safe'}
+                {player.letters.length > 0 ? player.letters.join("") : "Safe"}
               </Text>
             </View>
           ))}
@@ -818,7 +821,7 @@ export default function GamePlayScreen() {
                   attempt.success ? styles.historySuccess : styles.historyFail,
                 ]}
               >
-                {attempt.success ? 'Landed' : 'Failed'}
+                {attempt.success ? "Landed" : "Failed"}
               </Text>
             </View>
           ))}
@@ -840,91 +843,91 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   playerCard: {
-    backgroundColor: '#4A5056',
+    backgroundColor: "#4A5056",
     borderRadius: 8,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   playerName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   letters: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
+    fontWeight: "bold",
+    color: "#FF6B6B",
   },
   trickCard: {
-    backgroundColor: '#4A5056',
+    backgroundColor: "#4A5056",
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
   },
   trickHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   trickName: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     flex: 1,
   },
   trickCategory: {
     fontSize: 14,
-    color: '#B8BDC2',
-    textTransform: 'capitalize',
+    color: "#B8BDC2",
+    textTransform: "capitalize",
     marginLeft: 8,
   },
   trickDescription: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 16,
     lineHeight: 22,
   },
   trickMeta: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
   },
   difficultyText: {
     fontSize: 14,
-    color: '#B8BDC2',
+    color: "#B8BDC2",
     marginBottom: 4,
   },
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   button: {
     flex: 1,
     borderRadius: 8,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 4,
   },
   successButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   failButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: "#FF6B6B",
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
     fontSize: 16,
     marginLeft: 8,
   },
@@ -933,116 +936,116 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   playerStatus: {
-    backgroundColor: '#4A5056',
+    backgroundColor: "#4A5056",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   activePlayer: {
     borderWidth: 2,
-    borderColor: '#64B5F6',
+    borderColor: "#64B5F6",
   },
   statusName: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   statusLetters: {
     fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: 'bold',
+    color: "#FF6B6B",
+    fontWeight: "bold",
   },
   historySection: {
     marginBottom: 24,
   },
   historyItem: {
-    backgroundColor: '#4A5056',
+    backgroundColor: "#4A5056",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   historyLeft: {
     flex: 1,
   },
   historyTrick: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   historyPlayer: {
     fontSize: 14,
-    color: '#B8BDC2',
+    color: "#B8BDC2",
   },
   historyResult: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,
   },
   historySuccess: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    color: '#4CAF50',
+    backgroundColor: "rgba(76, 175, 80, 0.2)",
+    color: "#4CAF50",
   },
   historyFail: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-    color: '#FF6B6B',
+    backgroundColor: "rgba(255, 107, 107, 0.2)",
+    color: "#FF6B6B",
   },
   errorText: {
     fontSize: 18,
-    color: '#FF6B6B',
-    textAlign: 'center',
+    color: "#FF6B6B",
+    textAlign: "center",
     marginTop: 24,
   },
   difficultyControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   difficultyLabel: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   difficultyButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   difficultyButton: {
-    backgroundColor: '#444',
+    backgroundColor: "#444",
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: 10,
   },
   difficultyButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   disabledButton: {
     opacity: 0.5,
   },
   abandonButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: "#FF6B6B",
     padding: 8,
     borderRadius: 4,
   },
   abandonButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
